@@ -1,0 +1,51 @@
+fn radixSortDigit(value: int, shift: int, mostSignificant: bool): int {
+  let digit = (value >> shift) & 255;
+  if mostSignificant {
+    digit = digit ^ 128;
+  }
+  return digit;
+}
+
+// int is a signed 64-bit value. Eight stable byte passes, with the top
+// sign bit flipped, order its complete domain without arithmetic overflow.
+public fn radixSort(values: []int): Result<void, ArrayGrowthError> {
+  const size = length(values);
+  if size < 2 {
+    return Ok();
+  }
+  const byteWidth = 8;
+  const passCount = 8;
+  const radix = 256;
+  const counts = arrayOf<int>();
+  counts.reserve(radix)?;
+  for bucket in 0..radix {
+    counts.push(0)?;
+  }
+  const output = copy(values);
+  for pass in 0..passCount {
+    const shift = pass * byteWidth;
+    const mostSignificant = pass == passCount - 1;
+    for bucket in 0..radix {
+      counts[bucket] = 0;
+    }
+    for value in values {
+      const digit = radixSortDigit(value, shift, mostSignificant);
+      counts[digit] += 1;
+    }
+    let total = 0;
+    for bucket in 0..radix {
+      const sizeOfBucket = counts[bucket];
+      counts[bucket] = total;
+      total += sizeOfBucket;
+    }
+    for value in values {
+      const digit = radixSortDigit(value, shift, mostSignificant);
+      output[counts[digit]] = value;
+      counts[digit] += 1;
+    }
+    for index in 0..size {
+      values[index] = output[index];
+    }
+  }
+  return Ok();
+}

@@ -1,0 +1,75 @@
+public type SegmentTree {
+  tree: []int,
+  size: int,
+  base: int,
+}
+
+public fn newSegmentTree(values: []int): Result<SegmentTree, Error> {
+  let base = 1;
+  while base < values.length() {
+    base = sizeTimes(base, 2)?;
+  }
+  const storage = zeroes(sizeTimes(base, 2)?);
+  for index in 0..values.length() {
+    storage[base + index] = values[index];
+  }
+  let position = base - 1;
+  while position > 0 {
+    const sum = total(storage[position * 2], storage[position * 2 + 1])?;
+    storage[position] = sum;
+    position -= 1;
+  }
+  return Ok(SegmentTree { tree: storage, size: values.length(), base });
+}
+
+public fn length(tree: SegmentTree): int {
+  return tree.size;
+}
+
+// Point replacement stages every ancestor before committing any mutation.
+public fn set(tree: SegmentTree, index: int, value: int): Result<void, Error> {
+  if index < 0 || index >= tree.size {
+    return Err(Error.InvalidIndex);
+  }
+  const positions: []int = [];
+  const replacements: []int = [];
+  let position = tree.base + index;
+  let replacement = value;
+  append(positions, position);
+  append(replacements, replacement);
+  while position > 1 {
+    if position % 2 == 0 {
+      replacement = total(replacement, tree.tree[position + 1])?;
+    } else {
+      replacement = total(tree.tree[position - 1], replacement)?;
+    }
+    position /= 2;
+    append(positions, position);
+    append(replacements, replacement);
+  }
+  for offset in 0..positions.length() {
+    tree.tree[positions[offset]] = replacements[offset];
+  }
+  return Ok();
+}
+
+public fn rangeSum(tree: SegmentTree, start: int, end: int): Result<int, Error> {
+  validRange(tree.size, start, end)?;
+  let left = tree.base + start;
+  let right = tree.base + end;
+  let leftSum = 0;
+  let rightSum = 0;
+  while left < right {
+    if left % 2 == 1 {
+      leftSum = total(leftSum, tree.tree[left])?;
+      left += 1;
+    }
+    if right % 2 == 1 {
+      right -= 1;
+      rightSum = total(tree.tree[right], rightSum)?;
+    }
+    left /= 2;
+    right /= 2;
+  }
+  return total(leftSum, rightSum);
+}

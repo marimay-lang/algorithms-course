@@ -1,0 +1,25 @@
+import { Error as IoError, println } from "std/io";
+
+import * as graph from "course.local/algorithms/algorithms/graph_algorithms";
+
+fn main(): Result<void, IoError> {
+  const adjacency: graph.Adjacency = [[1, 2], [3], [3], []];
+  const route = match graph.bfsPath(adjacency, 0, 3) {
+    Ok(Some(value)) => value,
+    _ => panic("expected graph path missing"),
+  };
+  const weights: graph.WeightedAdjacency = [
+    [graph.edge(1, 4), graph.edge(2, 1)],
+    [graph.edge(0, 4), graph.edge(2, 2)],
+    [graph.edge(0, 1), graph.edge(1, 2)],
+  ];
+  const tree = match graph.kruskal(weights) {
+    Ok(value) => value,
+    Err(_) => panic("valid spanning tree rejected"),
+  };
+  if route.length() != 3 || route[0] != 0 || route[2] != 3 || tree.totalWeight != 3 {
+    panic("graph example result differs from its hand-worked solution");
+  }
+  println("graphs example passed")?;
+  return Ok();
+}

@@ -1,0 +1,63 @@
+@test
+fn fibonacciChecksBoundariesAndOverflow(): void {
+  expect.equal(fibonacci(0), Some(0));
+  expect.equal(fibonacci(1), Some(1));
+  expect.equal(fibonacci(2), Some(1));
+  expect.equal(fibonacci(10), Some(55));
+  expect.equal(fibonacci(92), Some(7540113804746346429));
+  expect.none(fibonacci(-1));
+  expect.none(fibonacci(93));
+  expect.none(fibonacci(9223372036854775807));
+}
+
+@test
+fn coinAlgorithmsDefineInvalidAndUnreachableInputs(): void {
+  expect.equal(minimumCoins([1, 3, 4], 6), Some(2));
+  expect.none(minimumCoins([2], 3));
+  expect.equal(minimumCoins([], 0), Some(0));
+  expect.none(minimumCoins([], 1));
+  expect.none(minimumCoins([0, 1], 3));
+  expect.none(minimumCoins([-1], 3));
+  expect.none(minimumCoins([1, 1], 3));
+  expect.none(minimumCoins([1], -1));
+  expect.none(minimumCoins([1], 9223372036854775807));
+  expect.equal(countCoinCombinations([1, 2, 5], 5), Some(4));
+  expect.equal(countCoinCombinations([], 0), Some(1));
+  expect.equal(countCoinCombinations([], 3), Some(0));
+  expect.none(countCoinCombinations([1, 1], 3));
+  expect.none(countCoinCombinations([0], 3));
+  expect.none(countCoinCombinations([1], -1));
+  expect.none(countCoinCombinations([1], 9223372036854775807));
+}
+
+@test
+fn coinTablesAgreeWithIndependentCountEnumeration(): void {
+  for amount in 0..17 {
+    let minimum = amount + 1;
+    let combinations = 0;
+    for ones in 0..amount + 1 {
+      for threes in 0..amount / 3 + 1 {
+        for fours in 0..amount / 4 + 1 {
+          if ones + 3 * threes + 4 * fours == amount {
+            combinations += 1;
+            const count = ones + threes + fours;
+            if count < minimum {
+              minimum = count;
+            }
+          }
+        }
+      }
+    }
+    expect.equal(minimumCoins([1, 3, 4], amount), Some(minimum));
+    expect.equal(countCoinCombinations([1, 3, 4], amount), Some(combinations));
+  }
+}
+
+@test
+fn coinCombinationOverflowIsAnExpectedResult(): void {
+  const coins = arrayOf<int>();
+  for denomination in 1..501 {
+    expect.ok(coins.push(denomination));
+  }
+  expect.none(countCoinCombinations(coins, 500));
+}

@@ -1,0 +1,79 @@
+// Hash-based helpers preserve first-encounter order where the result is a sequence.
+public fn stableUnique(values: []int): []int {
+  const seen = setOf<int>();
+  const result: []int = [];
+  for value in values {
+    if !seen.contains(value) {
+      const _ = seen.add(value);
+      const _ = result.push(value);
+    }
+  }
+  return result;
+}
+
+// Returns distinct input indices. Pairs whose addition would overflow cannot match.
+public fn twoSum(values: []int, target: int): Option<(int, int)> {
+  const seen = mapOf<int, int>();
+  for index in 0..values.length() {
+    if const complement = checkedSubtract(target, values[index]) {
+      if const previous = seen.get(complement) {
+        return Some((previous, index));
+      }
+    }
+    if const previous = seen.get(values[index]) {
+      const _ = previous;
+    } else {
+      const _ = seen.put(values[index], index);
+    }
+  }
+  return None;
+}
+
+public fn multisetIntersection(left: []int, right: []int): []int {
+  const counts = mapOf<int, int>();
+  for value in right {
+    const count = match counts.get(value) {
+      Some(previous) => previous,
+      None => 0,
+    };
+    const _ = counts.put(value, count + 1);
+  }
+  const result: []int = [];
+  for value in left {
+    const count = match counts.get(value) {
+      Some(previous) => previous,
+      None => 0,
+    };
+    if count > 0 {
+      const _ = result.push(value);
+      const _ = counts.put(value, count - 1);
+    }
+  }
+  return result;
+}
+
+// Boyer-Moore vote followed by verification: absence is represented explicitly.
+public fn majority(values: []int): Option<int> {
+  let candidate = 0;
+  let balance = 0;
+  for value in values {
+    if balance == 0 {
+      candidate = value;
+    }
+    if value == candidate {
+      balance += 1;
+    } else {
+      balance -= 1;
+    }
+  }
+  let occurrences = 0;
+  for value in values {
+    if value == candidate {
+      occurrences += 1;
+    }
+  }
+  if occurrences > values.length() / 2 {
+    return Some(candidate);
+  }
+  return None;
+}

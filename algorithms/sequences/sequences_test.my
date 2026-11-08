@@ -1,0 +1,97 @@
+fn same(actual: []int, expected: []int): void {
+  expect.equal(actual.length(), expected.length());
+  for index in 0..actual.length() {
+    expect.equal(actual[index], expected[index]);
+  }
+}
+
+@test
+fn scansAndRotations(): void {
+  const empty: []int = [];
+  expect.none(minMax(empty));
+  match minMax([4, -9, 4, 2]) {
+    Some(pair) => match pair {
+      (low, high) => {
+        expect.equal(low, -9);
+        expect.equal(high, 4);
+      },
+    },
+    None => panic("min max"),
+  };
+  reverse(empty);
+  const values = [1, 2, 3, 4, 5];
+  reverse(values);
+  same(values, [5, 4, 3, 2, 1]);
+  expect.true(rotateLeft(values, 7));
+  same(values, [3, 2, 1, 5, 4]);
+  expect.false(rotateLeft(values, -1));
+  same(values, [3, 2, 1, 5, 4]);
+  expect.true(rotateLeft(empty, 100));
+}
+
+@test
+fn prefixRangeAndDeduplication(): void {
+  const source = [4, -2, 7, -1];
+  const prefix = match prefixSums(source) {
+    Some(value) => value,
+    None => panic("prefix"),
+  };
+  for start in 0..=source.length() {
+    for end in start..=source.length() {
+      let total = 0;
+      for index in start..end {
+        total += source[index];
+      }
+      expect.equal(rangeSum(prefix, start, end), Some(total));
+    }
+  }
+  expect.equal(rangeSum(prefix, -1, 1), None);
+  expect.equal(rangeSum(prefix, 2, 1), None);
+  expect.equal(rangeSum(prefix, 0, 5), None);
+  expect.none(prefixSums([9223372036854775807, 1]));
+  expect.equal(rangeSum([-9223372036854775807 - 1, 1], 0, 1), None);
+  expect.none(deduplicateSorted([2, 1]));
+  same(
+    match deduplicateSorted([-1, -1, 0, 2, 2]) {
+      Some(value) => value,
+      None => panic("dedup"),
+    },
+    [-1, 0, 2],
+  );
+  same(
+    match deduplicateSorted([]) {
+      Some(value) => value,
+      None => panic("empty"),
+    },
+    [],
+  );
+}
+
+@test
+fn slidingWindowsMatchQuadraticOracle(): void {
+  expect.none(slidingMaximum([], 1));
+  expect.none(slidingMaximum([1], 0));
+  expect.none(slidingMaximum([1], 2));
+  for seed in 0..30 {
+    const values: []int = [];
+    for index in 0..10 {
+      const _ = values.push((seed * 7 + index * index * 3) % 19 - 9);
+    }
+    for width in 1..=values.length() {
+      const actual = match slidingMaximum(values, width) {
+        Some(value) => value,
+        None => panic("window"),
+      };
+      expect.equal(actual.length(), values.length() - width + 1);
+      for start in 0..actual.length() {
+        let maximum = values[start];
+        for index in start..start + width {
+          if values[index] > maximum {
+            maximum = values[index];
+          }
+        }
+        expect.equal(actual[start], maximum);
+      }
+    }
+  }
+}

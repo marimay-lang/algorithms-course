@@ -1,0 +1,72 @@
+fn enumeratePalindrome(text: []rune): RuneSpan {
+  let bestStart = 0;
+  let bestLength = 0;
+  for start in 0..text.length() {
+    for size in 1..text.length() - start + 1 {
+      let valid = true;
+      for offset in 0..size / 2 {
+        if text[start + offset] != text[start + size - offset - 1] {
+          valid = false;
+        }
+      }
+      if valid && size > bestLength {
+        bestStart = start;
+        bestLength = size;
+      }
+    }
+  }
+  return RuneSpan { start: bestStart, length: bestLength };
+}
+
+fn enumerateDistinct(text: []rune): RuneSpan {
+  let bestStart = 0;
+  let bestLength = 0;
+  for start in 0..text.length() {
+    for size in 1..text.length() - start + 1 {
+      let valid = true;
+      for left in start..start + size {
+        for right in left + 1..start + size {
+          if text[left] == text[right] {
+            valid = false;
+          }
+        }
+      }
+      if valid && size > bestLength {
+        bestStart = start;
+        bestLength = size;
+      }
+    }
+  }
+  return RuneSpan { start: bestStart, length: bestLength };
+}
+
+@test
+fn palindromeHandlesParityUnicodeAndEarliestTies(): void {
+  checkSpan(longestPalindrome([]), 0, 0);
+  checkSpan(longestPalindrome(scalarInput("abba")), 0, 4);
+  checkSpan(longestPalindrome(scalarInput("babad")), 0, 3);
+  checkSpan(longestPalindrome(scalarInput("東🚀λ🚀東a")), 0, 5);
+  checkSpan(longestPalindrome(scalarInput("abcd")), 0, 1);
+}
+
+@test
+fn distinctWindowHandlesRepeatedRunesAndEmptyInput(): void {
+  checkSpan(checkedSpan(longestDistinctSubstring([])), 0, 0);
+  checkSpan(checkedSpan(longestDistinctSubstring(scalarInput("aaaa"))), 0, 1);
+  checkSpan(checkedSpan(longestDistinctSubstring(scalarInput("abba"))), 0, 2);
+  checkSpan(checkedSpan(longestDistinctSubstring(scalarInput("λ🚀λ東a"))), 1, 4);
+}
+
+@test
+fn longestSpansAgreeWithExhaustiveSubstringOracles(): void {
+  const alphabet = scalarInput("aλ🚀");
+  for size in 0..6 {
+    for code in 0..smallPower(3, size) {
+      const text = sampleText(size, code, alphabet);
+      const palindrome = enumeratePalindrome(text);
+      const distinct = enumerateDistinct(text);
+      checkSpan(longestPalindrome(text), palindrome.start, palindrome.length);
+      checkSpan(checkedSpan(longestDistinctSubstring(text)), distinct.start, distinct.length);
+    }
+  }
+}

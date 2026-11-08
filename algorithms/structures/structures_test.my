@@ -1,0 +1,59 @@
+@test
+fn stackAndQueueOrderingAndEmptyTransitions(): void {
+  const stack = newStack();
+  const queue = newQueue();
+  expect.none(stack.pop());
+  expect.none(queue.dequeue());
+  for value in 0..30 {
+    stack.push(value);
+    queue.enqueue(value);
+  }
+  for index in 0..30 {
+    expect.equal(stack.pop(), Some(29 - index));
+    expect.equal(queue.dequeue(), Some(index));
+  }
+  expect.equal(stack.length(), 0);
+  expect.equal(queue.length(), 0);
+  expect.none(stack.pop());
+  expect.none(queue.dequeue());
+  queue.enqueue(42);
+  expect.equal(queue.dequeue(), Some(42));
+}
+
+@test
+fn heapMaintainsMinimumAcrossInterleavedOperations(): void {
+  const heap = newMinHeap();
+  expect.none(heap.pop());
+  for value in [9, -3, 9, 0, -7] {
+    heap.push(value);
+  }
+  expect.equal(heap.pop(), Some(-7));
+  heap.push(-10);
+  for value in [-10, -3, 0, 9, 9] {
+    expect.equal(heap.pop(), Some(value));
+  }
+  expect.none(heap.pop());
+}
+
+@test
+fn unionFindMatchesTransitiveConnectivity(): void {
+  expect.none(tryNewDsu(-1));
+  const sets = match tryNewDsu(6) {
+    Some(value) => value,
+    None => panic("valid DSU size"),
+  };
+  expect.equal(sets.components(), 6);
+  expect.true(sets.union(0, 1));
+  expect.true(sets.union(2, 3));
+  expect.true(sets.union(1, 3));
+  expect.false(sets.union(0, 2));
+  expect.equal(sets.components(), 3);
+  for left in 0..4 {
+    for right in 0..4 {
+      expect.true(sets.connected(left, right));
+    }
+    expect.false(sets.connected(left, 4));
+  }
+  expect.true(sets.connected(5, 5));
+  expect.equal(newDsu(0).components(), 0);
+}

@@ -1,0 +1,46 @@
+// Private table construction keeps expected logical growth failure explicit.
+fn integerTable(size: int, initial: int): Option<[]int> {
+  if size < 0 {
+    return None;
+  }
+  const values = arrayOf<int>();
+  for index in 0..size {
+    match values.push(initial) {
+      Ok(_) => {},
+      Err(_) => {
+        return None;
+      },
+    };
+  }
+  return Some(values);
+}
+
+fn booleanTable(size: int): Option<[]bool> {
+  if size < 0 {
+    return None;
+  }
+  const values = arrayOf<bool>();
+  for index in 0..size {
+    match values.push(false) {
+      Ok(_) => {},
+      Err(_) => {
+        return None;
+      },
+    };
+  }
+  return Some(values);
+}
+
+fn positiveDistinctCoins(coins: []int): bool {
+  for index in 0..coins.length() {
+    if coins[index] <= 0 {
+      return false;
+    }
+    for previous in 0..index {
+      if coins[previous] == coins[index] {
+        return false;
+      }
+    }
+  }
+  return true;
+}

@@ -1,0 +1,25 @@
+import { runes } from "std/text";
+
+@test
+fn integerCountsAndEmptyCollections(): void {
+  const counts = intFrequencies([2, -1, 2, 2, -1]);
+  expect.equal(counts.get(2), Some(3));
+  expect.equal(counts.get(-1), Some(2));
+  expect.none(counts.get(99));
+  expect.equal(counts.length(), 2);
+  expect.equal(uniqueIntCount([2, -1, 2, 2, -1]), 2);
+  expect.equal(intFrequencies([]).length(), 0);
+  expect.equal(uniqueIntCount([]), 0);
+}
+
+@test
+fn frequenciesCountUnicodeScalars(): void {
+  const characters = match runes("λλ🙂", 3) {
+    Ok(value) => value,
+    Err(_) => panic("runes"),
+  };
+  const counts = runeFrequencies(characters);
+  expect.equal(counts.length(), 2);
+  expect.equal(counts.get(characters[0]), Some(2));
+  expect.equal(counts.get(characters[2]), Some(1));
+}

@@ -15,9 +15,10 @@ equals the number of all input elements strictly above the threshold.
 The algorithm reads every element once: O(n) time and O(1) auxiliary memory.
 The input itself is excluded from auxiliary-memory accounting.
 
-In the bounded preview used for this lesson, tests use `@test` and explicit
-checks with `panic`. The target contract describes `expect.equal`, but the
-installed checker did not yet permit that entire API.
+Tests use built-in `@test` functions. The current preview supports
+`expect.equal`, `expect.true`, `expect.none` and related helpers; the original
+lesson also demonstrates explicit checks with `panic`. Run the whole course
+with `mmay test . --engine both` to compare VM and native behavior.
 
 ## Manual trace
 

@@ -1,0 +1,249 @@
+{
+  "schema": "marimay.course-correctness/1",
+  "verified_at_utc": "2026-11-08T10:32:38.900617+00:00",
+  "scope": "Local correctness; no performance or platform acceptance claim",
+  "repository_revision": "da819769996a604a2ee22c7f96acc624deed0d12",
+  "working_tree_dirty": true,
+  "source_sha256": "c1349cea4400a7d1f343b5c6fa17d06eebd047548775d698630cf1696db46fd1",
+  "compiler_sha256": "0df319b95e4322321b3151924a9af21c2a6994294dd0f797a95445d578471a38",
+  "compiler_source_checkout_revision": null,
+  "compiler_identity_scope": "Binary SHA-256 identifies the executable; source checkout revision, when available, does not assert which source built that executable",
+  "compiler_version": {
+    "schema": "marimay.version/2",
+    "compiler": "0.1.0-alpha.1",
+    "runtime": "0.1.0-alpha.1",
+    "language": "0.1-design",
+    "release": {
+      "channel": "private-preview",
+      "claim": "local-checker-backed-slice",
+      "publicationReady": false
+    },
+    "bytecode": {
+      "version": "unavailable",
+      "compatibility": "none"
+    },
+    "standardLibrary": {
+      "version": "0.1.0-alpha.1",
+      "scope": "bounded-preview",
+      "compatibility": "alpha-source"
+    },
+    "bootstrapStage": 0,
+    "host": {
+      "system": "Darwin",
+      "processor": "arm64"
+    },
+    "targets": [
+      "native-host"
+    ],
+    "commands": {
+      "available": [
+        "build",
+        "check",
+        "doctor",
+        "fmt",
+        "help",
+        "init",
+        "lsp",
+        "run",
+        "test",
+        "version"
+      ],
+      "staged": [
+        "add",
+        "audit",
+        "bench",
+        "doc",
+        "exec",
+        "explain",
+        "fix",
+        "fuzz",
+        "generate",
+        "list",
+        "outdated",
+        "remove",
+        "update",
+        "vendor",
+        "vet",
+        "why"
+      ]
+    }
+  },
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64"
+  },
+  "checks": {
+    "format": "passed",
+    "check_all_targets": "passed",
+    "tests_engine_both": {
+      "passed": 66,
+      "failed": 0,
+      "names": [
+        "course.local/algorithms/algorithms/counting.frequenciesCountUnicodeScalars",
+        "course.local/algorithms/algorithms/counting.integerCountsAndEmptyCollections",
+        "course.local/algorithms/algorithms/dynamic.coinAlgorithmsDefineInvalidAndUnreachableInputs",
+        "course.local/algorithms/algorithms/dynamic.coinCombinationOverflowIsAnExpectedResult",
+        "course.local/algorithms/algorithms/dynamic.coinTablesAgreeWithIndependentCountEnumeration",
+        "course.local/algorithms/algorithms/dynamic.commonSubsequenceMatchesEnumeration",
+        "course.local/algorithms/algorithms/dynamic.editDistanceCountsRunesAndUsesUnitEdits",
+        "course.local/algorithms/algorithms/dynamic.fibonacciChecksBoundariesAndOverflow",
+        "course.local/algorithms/algorithms/dynamic.increasingSubsequenceMatchesEnumeration",
+        "course.local/algorithms/algorithms/dynamic.knapsackHandlesZeroWeightsAndExpectedErrors",
+        "course.local/algorithms/algorithms/dynamic.knapsackMatchesAllItemSubsets",
+        "course.local/algorithms/algorithms/dynamic.maximumSubarrayDefinesNegativeAndOverflowCases",
+        "course.local/algorithms/algorithms/dynamic.maximumSubarrayMatchesEverySmallInterval",
+        "course.local/algorithms/algorithms/dynamic.subsequenceLengthsHaveStrictAndEmptyContracts",
+        "course.local/algorithms/algorithms/dynamic.subsetSumHandlesEmptyZeroAndInvalidInputs",
+        "course.local/algorithms/algorithms/dynamic.subsetSumMatchesExhaustiveSmallSubsets",
+        "course.local/algorithms/algorithms/graph_algorithms.allThreeVertexDigraphsAgreeOnReachabilityAndSccRelations",
+        "course.local/algorithms/algorithms/graph_algorithms.dijkstraMatchesBellmanFordOnGeneratedNonnegativeGraphs",
+        "course.local/algorithms/algorithms/graph_algorithms.fullWeightedValidationAndOverflowNeverBecomeDistances",
+        "course.local/algorithms/algorithms/graph_algorithms.independentShortestPathAlgorithmsAgreeOnSignedDag",
+        "course.local/algorithms/algorithms/graph_algorithms.minimumSpanningTreesMatchAllThreeVertexTreeChoices",
+        "course.local/algorithms/algorithms/graph_algorithms.negativeCyclesHaveExplicitReachabilityContracts",
+        "course.local/algorithms/algorithms/graph_algorithms.parallelEdgesLoopsAndEmptySpanningTrees",
+        "course.local/algorithms/algorithms/graph_algorithms.spanningTreesRejectMalformedDisconnectedAndOverflowingInputs",
+        "course.local/algorithms/algorithms/graph_algorithms.topologicalOrdersRespectEveryEdgeAndCyclesAreExplicit",
+        "course.local/algorithms/algorithms/graph_algorithms.traversalOrderPathsAndDisconnectedVertices",
+        "course.local/algorithms/algorithms/graph_algorithms.undirectedComponentsColoringAndMultiplicityContracts",
+        "course.local/algorithms/algorithms/graph_algorithms.unreachableInvalidEdgesAndInvalidStartsAreRejected",
+        "course.local/algorithms/algorithms/greedy.intervalSchedulingMatchesSubsetOracle",
+        "course.local/algorithms/algorithms/greedy.intervalsValidateAndPreserveInput",
+        "course.local/algorithms/algorithms/greedy.jumpLayersMatchDynamicOracle",
+        "course.local/algorithms/algorithms/greedy.mergeCostsAndOverflow",
+        "course.local/algorithms/algorithms/hashing.pairSearchMatchesQuadraticOracle",
+        "course.local/algorithms/algorithms/hashing.stableOrderAndMultiplicities",
+        "course.local/algorithms/algorithms/numeric.binomialAndSquareRootBoundaries",
+        "course.local/algorithms/algorithms/numeric.euclideanArithmeticAndOverflow",
+        "course.local/algorithms/algorithms/numeric.modularPowerAvoidsIntermediateOverflow",
+        "course.local/algorithms/algorithms/numeric.sieveAndFactorizationAgreeWithTrialDivision",
+        "course.local/algorithms/algorithms/range_structures.constructorsOwnInputsAndAliasesShareStructureState",
+        "course.local/algorithms/algorithms/range_structures.invalidAndEmptyRangesHaveExplicitResults",
+        "course.local/algorithms/algorithms/range_structures.overflowingUpdatesLeaveEveryAffectedCellUnchanged",
+        "course.local/algorithms/algorithms/range_structures.sparseQueriesMatchEveryNonemptyDirectMinimum",
+        "course.local/algorithms/algorithms/range_structures.updatesMatchDirectArrayQueriesAcrossEveryInterval",
+        "course.local/algorithms/algorithms/searching.exhaustiveSmallSearches",
+        "course.local/algorithms/algorithms/searching.searchMachineIntegerBoundaries",
+        "course.local/algorithms/algorithms/sequences.prefixRangeAndDeduplication",
+        "course.local/algorithms/algorithms/sequences.scansAndRotations",
+        "course.local/algorithms/algorithms/sequences.slidingWindowsMatchQuadraticOracle",
+        "course.local/algorithms/algorithms/sorting.distributionSortContracts",
+        "course.local/algorithms/algorithms/sorting.exhaustiveSmallSorting",
+        "course.local/algorithms/algorithms/sorting.sortingMachineIntegerAndByteBoundaries",
+        "course.local/algorithms/algorithms/structures.heapMaintainsMinimumAcrossInterleavedOperations",
+        "course.local/algorithms/algorithms/structures.stackAndQueueOrderingAndEmptyTransitions",
+        "course.local/algorithms/algorithms/structures.unionFindMatchesTransitiveConnectivity",
+        "course.local/algorithms/algorithms/text_algorithms.distinctWindowHandlesRepeatedRunesAndEmptyInput",
+        "course.local/algorithms/algorithms/text_algorithms.kmpAgreesWithNaiveSearchOnEverySmallBinaryText",
+        "course.local/algorithms/algorithms/text_algorithms.longestSpansAgreeWithExhaustiveSubstringOracles",
+        "course.local/algorithms/algorithms/text_algorithms.palindromeHandlesParityUnicodeAndEarliestTies",
+        "course.local/algorithms/algorithms/text_algorithms.runEncodingCountsUnicodeScalars",
+        "course.local/algorithms/algorithms/text_algorithms.runEncodingRoundTripsEverySmallBinaryText",
+        "course.local/algorithms/algorithms/text_algorithms.searchesDefineEmptyMissingAndRuneOffsets",
+        "course.local/algorithms/algorithms/text_algorithms.zValuesHaveExactPrefixLengths",
+        "course.local/algorithms/algorithms/text_algorithms.zValuesMatchIndependentQuadraticPrefixChecks",
+        "course.local/algorithms/examples/01-linear-scan.countAboveHandlesBoundaries",
+        "course.local/algorithms/examples/01-linear-scan.countAboveHandlesRepresentativeInputs",
+        "course.local/algorithms/exercises/01-linear-search.firstMatchAndAbsentInputs"
+      ]
+    },
+    "examples": [
+      {
+        "path": "examples/01-linear-scan",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/02-searching",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/03-sorting",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/04-data-structures",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/05-sequences",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/06-hashing",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/07-number-theory",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/08-graphs",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/09-range-queries",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/10-dynamic-programming",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/11-text",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      },
+      {
+        "path": "examples/12-greedy",
+        "engines": [
+          "vm",
+          "native-debug",
+          "native-release"
+        ]
+      }
+    ]
+  }
+}

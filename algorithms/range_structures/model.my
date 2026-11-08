@@ -1,0 +1,51 @@
+// All query intervals are half-open [start, end). Input arrays are copied.
+public enum Error {
+  InvalidIndex,
+  InvalidRange,
+  EmptyRange,
+  ArithmeticOverflow,
+  SizeOverflow,
+}
+
+fn total(left: int, right: int): Result<int, Error> {
+  return match checkedAdd(left, right) {
+    Some(value) => Ok(value),
+    None => Err(Error.ArithmeticOverflow),
+  };
+}
+
+fn sizePlus(left: int, right: int): Result<int, Error> {
+  return match checkedAdd(left, right) {
+    Some(value) => Ok(value),
+    None => Err(Error.SizeOverflow),
+  };
+}
+
+fn sizeTimes(left: int, right: int): Result<int, Error> {
+  return match checkedMultiply(left, right) {
+    Some(value) => Ok(value),
+    None => Err(Error.SizeOverflow),
+  };
+}
+
+fn append(values: []int, value: int): void {
+  match values.push(value) {
+    Ok(_) => {},
+    Err(_) => panic("bounded range structure exceeded its checked array size"),
+  };
+}
+
+fn zeroes(size: int): []int {
+  const values: []int = [];
+  for index in 0..size {
+    append(values, 0);
+  }
+  return values;
+}
+
+fn validRange(size: int, start: int, end: int): Result<void, Error> {
+  if start < 0 || end < start || end > size {
+    return Err(Error.InvalidRange);
+  }
+  return Ok();
+}

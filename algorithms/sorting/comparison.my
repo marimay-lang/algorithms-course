@@ -1,0 +1,119 @@
+fn swapSortValues(values: []int, left: int, right: int): void {
+  const temporary = values[left];
+  values[left] = values[right];
+  values[right] = temporary;
+}
+
+public fn selectionSort(values: []int): void {
+  for start in 0..length(values) {
+    let smallest = start;
+    for candidate in (start + 1)..length(values) {
+      if values[candidate] < values[smallest] {
+        smallest = candidate;
+      }
+    }
+    if smallest != start {
+      swapSortValues(values, start, smallest);
+    }
+  }
+}
+
+public fn bubbleSort(values: []int): void {
+  let end = length(values);
+  while end > 1 {
+    let swapped = false;
+    for index in 1..end {
+      if values[index - 1] > values[index] {
+        swapSortValues(values, index - 1, index);
+        swapped = true;
+      }
+    }
+    if !swapped {
+      return;
+    }
+    end -= 1;
+  }
+}
+
+public fn cocktailSort(values: []int): void {
+  let start = 0;
+  let end = length(values);
+  while start + 1 < end {
+    let swapped = false;
+    for index in (start + 1)..end {
+      if values[index - 1] > values[index] {
+        swapSortValues(values, index - 1, index);
+        swapped = true;
+      }
+    }
+    if !swapped {
+      return;
+    }
+    end -= 1;
+    swapped = false;
+    let position = end;
+    while position > start + 1 {
+      position -= 1;
+      if values[position - 1] > values[position] {
+        swapSortValues(values, position - 1, position);
+        swapped = true;
+      }
+    }
+    if !swapped {
+      return;
+    }
+    start += 1;
+  }
+}
+
+public fn gnomeSort(values: []int): void {
+  let index = 1;
+  while index < length(values) {
+    if index == 0 || values[index - 1] <= values[index] {
+      index += 1;
+    } else {
+      swapSortValues(values, index - 1, index);
+      index -= 1;
+    }
+  }
+}
+
+public fn combSort(values: []int): void {
+  const shrinkNumerator = 10;
+  const shrinkDenominator = 13;
+  let gap = length(values);
+  let swapped = true;
+  while gap > 1 || swapped {
+    gap = (gap / shrinkDenominator) * shrinkNumerator + (
+      gap % shrinkDenominator
+    ) * shrinkNumerator / shrinkDenominator;
+    if gap < 1 {
+      gap = 1;
+    }
+    swapped = false;
+    let index = 0;
+    while index < length(values) - gap {
+      if values[index] > values[index + gap] {
+        swapSortValues(values, index, index + gap);
+        swapped = true;
+      }
+      index += 1;
+    }
+  }
+}
+
+public fn shellSort(values: []int): void {
+  let gap = length(values) / 2;
+  while gap > 0 {
+    for index in gap..length(values) {
+      const current = values[index];
+      let position = index;
+      while position >= gap && values[position - gap] > current {
+        values[position] = values[position - gap];
+        position -= gap;
+      }
+      values[position] = current;
+    }
+    gap /= 2;
+  }
+}

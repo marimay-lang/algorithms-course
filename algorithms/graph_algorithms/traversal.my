@@ -1,0 +1,265 @@
+// Explicit frames preserve recursive DFS neighbor order without recursion.
+public fn dfs(graph: Adjacency, start: int): Result<[]int, Error> {
+  validateAdjacency(graph)?;
+  validStart(graph.length(), start)?;
+  const seen = flags(graph.length());
+  const order: []int = [];
+  const stack: []int = [];
+  const next: []int = [];
+  seen[start] = true;
+  appendInt(order, start);
+  appendInt(stack, start);
+  appendInt(next, 0);
+  while stack.length() > 0 {
+    const top = stack.length() - 1;
+    const node = stack[top];
+    if next[top] == graph[node].length() {
+      const _ = stack.pop();
+      const _ = next.pop();
+    } else {
+      const neighbor = graph[node][next[top]];
+      next[top] += 1;
+      if !seen[neighbor] {
+        seen[neighbor] = true;
+        appendInt(order, neighbor);
+        appendInt(stack, neighbor);
+        appendInt(next, 0);
+      }
+    }
+  }
+  return Ok(order);
+}
+
+public fn bfsDistances(graph: Adjacency, start: int): Result<[]Option<int>, Error> {
+  validateAdjacency(graph)?;
+  validStart(graph.length(), start)?;
+  const result = distances(graph.length());
+  const queue: []int = [];
+  appendInt(queue, start);
+  result[start] = Some(0);
+  let head = 0;
+  while head < queue.length() {
+    const node = queue[head];
+    head += 1;
+    for neighbor in graph[node] {
+      const unseen = match result[neighbor] {
+        None => true,
+        Some(_) => false,
+      };
+      if unseen {
+        const distance = plus(present(result[node]), 1)?;
+        result[neighbor] = Some(distance);
+        appendInt(queue, neighbor);
+      }
+    }
+  }
+  return Ok(result);
+}
+
+// Returns None for an unreachable target; a successful path includes both ends.
+public fn bfsPath(graph: Adjacency, start: int, target: int): Result<Option<[]int>, Error> {
+  validateAdjacency(graph)?;
+  validStart(graph.length(), start)?;
+  validStart(graph.length(), target)?;
+  const parent = integers(graph.length(), -1);
+  const queue: []int = [];
+  parent[start] = start;
+  appendInt(queue, start);
+  let head = 0;
+  while head < queue.length() && parent[target] == -1 {
+    const node = queue[head];
+    head += 1;
+    for neighbor in graph[node] {
+      if parent[neighbor] == -1 {
+        parent[neighbor] = node;
+        appendInt(queue, neighbor);
+      }
+    }
+  }
+  if parent[target] == -1 {
+    return Ok(None<[]int>());
+  }
+  const reversed: []int = [];
+  let current = target;
+  appendInt(reversed, current);
+  while current != start {
+    current = parent[current];
+    appendInt(reversed, current);
+  }
+  const path: []int = [];
+  let index = reversed.length();
+  while index > 0 {
+    index -= 1;
+    appendInt(path, reversed[index]);
+  }
+  return Ok(Some(path));
+}
+
+// Requires symmetric adjacency, including parallel-edge multiplicities.
+public fn connectedComponents(graph: Adjacency): Result<[]int, Error> {
+  undirected(graph)?;
+  const labels = integers(graph.length(), -1);
+  let label = 0;
+  for root in 0..graph.length() {
+    if labels[root] == -1 {
+      const queue: []int = [];
+      appendInt(queue, root);
+      labels[root] = label;
+      let head = 0;
+      while head < queue.length() {
+        const node = queue[head];
+        head += 1;
+        for neighbor in graph[node] {
+          if labels[neighbor] == -1 {
+            labels[neighbor] = label;
+            appendInt(queue, neighbor);
+          }
+        }
+      }
+      label += 1;
+    }
+  }
+  return Ok(labels);
+}
+
+public fn topologicalOrder(graph: Adjacency): Result<[]int, Error> {
+  validateAdjacency(graph)?;
+  const incoming = integers(graph.length(), 0);
+  for neighbors in graph {
+    for neighbor in neighbors {
+      const count = plus(incoming[neighbor], 1)?;
+      incoming[neighbor] = count;
+    }
+  }
+  const order: []int = [];
+  for node in 0..graph.length() {
+    if incoming[node] == 0 {
+      appendInt(order, node);
+    }
+  }
+  let head = 0;
+  while head < order.length() {
+    const node = order[head];
+    head += 1;
+    for neighbor in graph[node] {
+      incoming[neighbor] -= 1;
+      if incoming[neighbor] == 0 {
+        appendInt(order, neighbor);
+      }
+    }
+  }
+  if order.length() != graph.length() {
+    return Err(Error.Cycle);
+  }
+  return Ok(order);
+}
+
+public fn hasDirectedCycle(graph: Adjacency): Result<bool, Error> {
+  return match topologicalOrder(graph) {
+    Ok(_) => Ok(false),
+    Err(Error.Cycle) => Ok(true),
+    Err(error) => Err(error),
+  };
+}
+
+public fn bipartiteColoring(graph: Adjacency): Result<[]int, Error> {
+  undirected(graph)?;
+  const colors = integers(graph.length(), -1);
+  for root in 0..graph.length() {
+    if colors[root] == -1 {
+      const queue: []int = [];
+      appendInt(queue, root);
+      colors[root] = 0;
+      let head = 0;
+      while head < queue.length() {
+        const node = queue[head];
+        head += 1;
+        for neighbor in graph[node] {
+          if colors[neighbor] == -1 {
+            colors[neighbor] = 1 - colors[node];
+            appendInt(queue, neighbor);
+          } else if colors[neighbor] == colors[node] {
+            return Err(Error.NotBipartite);
+          }
+        }
+      }
+    }
+  }
+  return Ok(colors);
+}
+
+// Kosaraju's two passes use bounded explicit DFS stacks.
+public fn stronglyConnectedComponents(graph: Adjacency): Result<[]int, Error> {
+  validateAdjacency(graph)?;
+  const reverse: Adjacency = [];
+  for node in 0..graph.length() {
+    const row: []int = [];
+    match reverse.push(row) {
+      Ok(_) => {},
+      Err(_) => panic("bounded reverse graph exceeded its vertex count"),
+    };
+  }
+  for node in 0..graph.length() {
+    for neighbor in graph[node] {
+      match reverse[neighbor].push(node) {
+        Ok(_) => {},
+        Err(_) => {
+          return Err(Error.CapacityExceeded);
+        },
+      };
+    }
+  }
+  const seen = flags(graph.length());
+  const finished: []int = [];
+  for root in 0..graph.length() {
+    if !seen[root] {
+      const stack: []int = [];
+      const next: []int = [];
+      appendInt(stack, root);
+      appendInt(next, 0);
+      seen[root] = true;
+      while stack.length() > 0 {
+        const top = stack.length() - 1;
+        const node = stack[top];
+        if next[top] == graph[node].length() {
+          appendInt(finished, node);
+          const _ = stack.pop();
+          const _ = next.pop();
+        } else {
+          const neighbor = graph[node][next[top]];
+          next[top] += 1;
+          if !seen[neighbor] {
+            seen[neighbor] = true;
+            appendInt(stack, neighbor);
+            appendInt(next, 0);
+          }
+        }
+      }
+    }
+  }
+  const labels = integers(graph.length(), -1);
+  let remaining = finished.length();
+  let label = 0;
+  while remaining > 0 {
+    remaining -= 1;
+    const root = finished[remaining];
+    if labels[root] == -1 {
+      const queue: []int = [];
+      appendInt(queue, root);
+      labels[root] = label;
+      let head = 0;
+      while head < queue.length() {
+        const node = queue[head];
+        head += 1;
+        for neighbor in reverse[node] {
+          if labels[neighbor] == -1 {
+            labels[neighbor] = label;
+            appendInt(queue, neighbor);
+          }
+        }
+      }
+      label += 1;
+    }
+  }
+  return Ok(labels);
+}

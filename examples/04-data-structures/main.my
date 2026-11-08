@@ -1,0 +1,21 @@
+import { println, Error as IoError } from "std/io";
+
+import * as structures from "course.local/algorithms/algorithms/structures";
+
+fn main(): Result<void, IoError> {
+  const heap = structures.newMinHeap();
+  for value in [7, 2, 9, 1] {
+    heap.push(value);
+  }
+  if heap.pop() != Some(1) || heap.pop() != Some(2) {
+    panic("heap order");
+  }
+  const sets = structures.newDsu(4);
+  sets.union(0, 1);
+  sets.union(1, 2);
+  if !sets.connected(0, 2) || sets.connected(0, 3) {
+    panic("connectivity");
+  }
+  println("data structures example passed")?;
+  return Ok();
+}

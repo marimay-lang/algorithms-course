@@ -1,0 +1,140 @@
+fn appendTreeEdge(values: []TreeEdge, value: TreeEdge): void {
+  match values.push(value) {
+    Ok(_) => {},
+    Err(_) => panic("spanning tree exceeded its source vertex bound"),
+  };
+}
+
+// Requires a symmetric weighted multigraph. Negative weights are valid.
+public fn prim(graph: WeightedAdjacency): Result<SpanningTree, Error> {
+  undirectedWeighted(graph)?;
+  const chosen: []TreeEdge = [];
+  if graph.length() == 0 {
+    return Ok(SpanningTree { totalWeight: 0, edges: chosen });
+  }
+  const selected = flags(graph.length());
+  const best = distances(graph.length());
+  const parent = integers(graph.length(), -1);
+  best[0] = Some(0);
+  let total = 0;
+  for iteration in 0..graph.length() {
+    let next: Option<int> = None;
+    for node in 0..graph.length() {
+      if !selected[node] {
+        match best[node] {
+          None => {},
+          Some(candidate) => {
+            const better = match next {
+              None => true,
+              Some(previous) => candidate < present(best[previous]),
+            };
+            if better {
+              next = Some(node);
+            }
+          },
+        };
+      }
+    }
+    match next {
+      None => {
+        return Err(Error.Disconnected);
+      },
+      Some(node) => {
+        selected[node] = true;
+        const weight = present(best[node]);
+        total = plus(total, weight)?;
+        if parent[node] != -1 {
+          appendTreeEdge(chosen, TreeEdge { source: parent[node], target: node, weight });
+        }
+        for current in graph[node] {
+          if !selected[current.to] {
+            const better = match best[current.to] {
+              None => true,
+              Some(previous) => current.weight < previous,
+            };
+            if better {
+              best[current.to] = Some(current.weight);
+              parent[current.to] = node;
+            }
+          }
+        }
+      },
+    };
+  }
+  return Ok(SpanningTree { totalWeight: total, edges: chosen });
+}
+
+fn representative(parent: []int, node: int): int {
+  let root = node;
+  while parent[root] != root {
+    root = parent[root];
+  }
+  let current = node;
+  while parent[current] != current {
+    const next = parent[current];
+    parent[current] = root;
+    current = next;
+  }
+  return root;
+}
+
+fn edgeBefore(left: TreeEdge, right: TreeEdge): bool {
+  return left.weight < right.weight
+    || (left.weight == right.weight && left.source < right.source)
+    || (left.weight == right.weight && left.source == right.source && left.target < right.target);
+}
+
+// This reference version uses an explicit O(E^2) insertion sort before DSU.
+public fn kruskal(graph: WeightedAdjacency): Result<SpanningTree, Error> {
+  undirectedWeighted(graph)?;
+  const candidates: []TreeEdge = [];
+  for source in 0..graph.length() {
+    for current in graph[source] {
+      if source < current.to {
+        match candidates.push(TreeEdge { source, target: current.to, weight: current.weight }) {
+          Ok(_) => {},
+          Err(_) => {
+            return Err(Error.CapacityExceeded);
+          },
+        };
+      }
+    }
+  }
+  for index in 1..candidates.length() {
+    const current = candidates[index];
+    let position = index;
+    while position > 0 && edgeBefore(current, candidates[position - 1]) {
+      candidates[position] = candidates[position - 1];
+      position -= 1;
+    }
+    candidates[position] = current;
+  }
+  const parent = integers(graph.length(), 0);
+  const rank = integers(graph.length(), 0);
+  for node in 0..graph.length() {
+    parent[node] = node;
+  }
+  const chosen: []TreeEdge = [];
+  let total = 0;
+  for current in candidates {
+    let left = representative(parent, current.source);
+    let right = representative(parent, current.target);
+    if left != right {
+      if rank[left] < rank[right] {
+        const temporary = left;
+        left = right;
+        right = temporary;
+      }
+      parent[right] = left;
+      if rank[left] == rank[right] {
+        rank[left] += 1;
+      }
+      total = plus(total, current.weight)?;
+      appendTreeEdge(chosen, current);
+    }
+  }
+  if graph.length() > 0 && chosen.length() != graph.length() - 1 {
+    return Err(Error.Disconnected);
+  }
+  return Ok(SpanningTree { totalWeight: total, edges: chosen });
+}

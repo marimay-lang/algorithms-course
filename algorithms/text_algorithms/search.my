@@ -1,0 +1,110 @@
+/// First matching Unicode scalar-array offset; empty pattern matches at zero.
+/// O(text.length() * pattern.length()) time, O(1) auxiliary memory.
+public fn findNaive(text: []rune, pattern: []rune): Option<int> {
+  if pattern.length() == 0 {
+    return Some(0);
+  }
+  if pattern.length() > text.length() {
+    return None;
+  }
+  for start in 0..text.length() - pattern.length() + 1 {
+    let matched = 0;
+    while matched < pattern.length() && text[start + matched] == pattern[matched] {
+      matched += 1;
+    }
+    if matched == pattern.length() {
+      return Some(start);
+    }
+  }
+  return None;
+}
+
+fn zeroTable(size: int): Option<[]int> {
+  const values = arrayOf<int>();
+  for index in 0..size {
+    match values.push(0) {
+      Ok(_) => {},
+      Err(_) => {
+        return None;
+      },
+    };
+  }
+  return Some(values);
+}
+
+fn prefixLengths(pattern: []rune): Option<[]int> {
+  const prefix = match zeroTable(pattern.length()) {
+    Some(values) => values,
+    None => {
+      return None;
+    },
+  };
+  for index in 1..pattern.length() {
+    let matched = prefix[index - 1];
+    while matched > 0 && pattern[index] != pattern[matched] {
+      matched = prefix[matched - 1];
+    }
+    if pattern[index] == pattern[matched] {
+      matched += 1;
+    }
+    prefix[index] = matched;
+  }
+  return Some(prefix);
+}
+
+/// KMP first match; offsets are Unicode scalar-array indices, never byte offsets.
+/// O(text.length()+pattern.length()) time, O(pattern.length()) memory.
+public fn findKmp(text: []rune, pattern: []rune): Option<int> {
+  if pattern.length() == 0 {
+    return Some(0);
+  }
+  const prefix = match prefixLengths(pattern) {
+    Some(values) => values,
+    None => {
+      return None;
+    },
+  };
+  let matched = 0;
+  for index in 0..text.length() {
+    while matched > 0 && text[index] != pattern[matched] {
+      matched = prefix[matched - 1];
+    }
+    if text[index] == pattern[matched] {
+      matched += 1;
+    }
+    if matched == pattern.length() {
+      return Some(index - matched + 1);
+    }
+  }
+  return None;
+}
+
+/// Linear Z algorithm over rune arrays; z[0]=0, z[i] is the prefix-match length.
+/// O(n) time and O(n) auxiliary memory; None only for logical growth failure.
+public fn zValues(text: []rune): Option<[]int> {
+  const values = match zeroTable(text.length()) {
+    Some(table) => table,
+    None => {
+      return None;
+    },
+  };
+  let left = 0;
+  let right = 0;
+  for index in 1..text.length() {
+    if index < right {
+      values[index] = values[index - left];
+      if values[index] > right - index {
+        values[index] = right - index;
+      }
+    }
+    while values[index] < text.length() - index
+      && text[values[index]] == text[index + values[index]] {
+      values[index] += 1;
+    }
+    if index + values[index] > right {
+      left = index;
+      right = index + values[index];
+    }
+  }
+  return Some(values);
+}

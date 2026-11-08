@@ -1,0 +1,106 @@
+public fn minMax(values: []int): Option<(int, int)> {
+  if values.length() == 0 {
+    return None;
+  }
+  let smallest = values[0];
+  let largest = values[0];
+  for value in values {
+    if value < smallest {
+      smallest = value;
+    }
+    if value > largest {
+      largest = value;
+    }
+  }
+  return Some((smallest, largest));
+}
+
+fn reverseRange(values: []int, start: int, end: int): void {
+  let left = start;
+  let right = end - 1;
+  while left < right {
+    const saved = values[left];
+    values[left] = values[right];
+    values[right] = saved;
+    left += 1;
+    right -= 1;
+  }
+}
+
+public fn reverse(values: []int): void {
+  reverseRange(values, 0, values.length());
+}
+
+// Rotates in-place by a nonnegative count using three reversals.
+public fn rotateLeft(values: []int, count: int): bool {
+  if count < 0 {
+    return false;
+  }
+  if values.length() == 0 {
+    return true;
+  }
+  const split = count % values.length();
+  reverseRange(values, 0, split);
+  reverseRange(values, split, values.length());
+  reverseRange(values, 0, values.length());
+  return true;
+}
+
+public fn prefixSums(values: []int): Option<[]int> {
+  const result: []int = [0];
+  let total = 0;
+  for value in values {
+    total = match checkedAdd(total, value) {
+      Some(sum) => sum,
+      None => {
+        return None;
+      },
+    };
+    const _ = result.push(total);
+  }
+  return Some(result);
+}
+
+// Half-open [start,end); prefix must come from prefixSums.
+public fn rangeSum(prefix: []int, start: int, end: int): Option<int> {
+  if start < 0 || end < start || end >= prefix.length() {
+    return None;
+  }
+  return checkedSubtract(prefix[end], prefix[start]);
+}
+
+public fn deduplicateSorted(values: []int): Option<[]int> {
+  const result: []int = [];
+  for index in 0..values.length() {
+    if index > 0 && values[index] < values[index - 1] {
+      return None;
+    }
+    if index == 0 || values[index] != values[index - 1] {
+      const _ = result.push(values[index]);
+    }
+  }
+  return Some(result);
+}
+
+// Monotone index deque. Stale entries remain in allocated storage: O(n) space.
+public fn slidingMaximum(values: []int, width: int): Option<[]int> {
+  if width <= 0 || width > values.length() {
+    return None;
+  }
+  const deque: []int = [];
+  const result: []int = [];
+  let head = 0;
+  for index in 0..values.length() {
+    while head < deque.length() && deque[head] <= index - width {
+      head += 1;
+    }
+    while deque.length() > head && values[deque[deque.length() - 1]] <= values[index] {
+      const _ = deque.pop();
+    }
+    const _ = deque.push(index);
+    if index >= width - 1 {
+      const _ = result.push(values[deque[head]]);
+    }
+  }
+  return Some(result);
+}

@@ -1,0 +1,82 @@
+// Ordered searches require nondecreasing input and return the first match.
+public fn binarySearch(values: []int, target: int): Option<int> {
+  let left = 0;
+  let right = length(values) - 1;
+  let found: Option<int> = None;
+  while left <= right {
+    const middle = left + (right - left) / 2;
+    if values[middle] < target {
+      left = middle + 1;
+    } else {
+      if values[middle] == target {
+        found = Some(middle);
+      }
+      right = middle - 1;
+    }
+  }
+  return found;
+}
+
+public fn lowerBound(values: []int, target: int): int {
+  let left = 0;
+  let right = length(values);
+  while left < right {
+    const middle = left + (right - left) / 2;
+    if values[middle] < target {
+      left = middle + 1;
+    } else {
+      right = middle;
+    }
+  }
+  return left;
+}
+
+public fn upperBound(values: []int, target: int): int {
+  let left = 0;
+  let right = length(values);
+  while left < right {
+    const middle = left + (right - left) / 2;
+    if values[middle] <= target {
+      left = middle + 1;
+    } else {
+      right = middle;
+    }
+  }
+  return left;
+}
+
+public fn exponentialSearch(values: []int, target: int): Option<int> {
+  const size = length(values);
+  if size == 0 {
+    return None;
+  }
+  if values[0] == target {
+    return Some(0);
+  }
+  let bound = 1;
+  while bound < size && values[bound] < target {
+    if bound >= size - bound {
+      bound = size;
+    } else {
+      bound *= 2;
+    }
+  }
+  let left = bound / 2;
+  let right = bound;
+  if right >= size {
+    right = size - 1;
+  }
+  let found: Option<int> = None;
+  while left <= right {
+    const middle = left + (right - left) / 2;
+    if values[middle] < target {
+      left = middle + 1;
+    } else {
+      if values[middle] == target {
+        found = Some(middle);
+      }
+      right = middle - 1;
+    }
+  }
+  return found;
+}

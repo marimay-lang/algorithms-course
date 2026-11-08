@@ -1,0 +1,24 @@
+import { Error as IoError, println } from "std/io";
+
+import * as sorting from "course.local/algorithms/algorithms/sorting";
+
+fn main(): Result<void, IoError> {
+  const values = arrayOf(4, -1, 4, 0, 2);
+  sorting.mergeSort(values);
+  const expected = arrayOf(-1, 0, 2, 4, 4);
+  for index in 0..length(expected) {
+    if values[index] != expected[index] {
+      panic("merge sort produced an incorrect order");
+    }
+  }
+  const quick = arrayOf(2, 1, 2, -3);
+  const completed = match sorting.quickSort(quick) {
+    Ok(_) => true,
+    Err(_) => false,
+  };
+  if !completed || quick[0] != -3 || quick[1] != 1 || quick[2] != 2 || quick[3] != 2 {
+    panic("quicksort duplicate example failed");
+  }
+  println("sorting example passed")?;
+  return Ok();
+}

@@ -1,0 +1,49 @@
+fn checkedRuns(value: Option<[]RuneRun>): []RuneRun {
+  return match value {
+    Some(runs) => runs,
+    None => panic("unexpected run growth failure"),
+  };
+}
+
+fn checkRunRoundTrip(text: []rune): void {
+  const runs = checkedRuns(runLengthEncode(text));
+  let position = 0;
+  for index in 0..runs.length() {
+    const run = runs[index];
+    expect.true(run.count > 0);
+    if index > 0 {
+      expect.notEqual(runs[index - 1].value, run.value);
+    }
+    for repeat in 0..run.count {
+      expect.true(position < text.length());
+      expect.equal(text[position], run.value);
+      position += 1;
+    }
+  }
+  expect.equal(position, text.length());
+}
+
+@test
+fn runEncodingCountsUnicodeScalars(): void {
+  const text = scalarInput("λλ🚀🚀🚀東");
+  const runs = checkedRuns(runLengthEncode(text));
+  expect.equal(runs.length(), 3);
+  expect.equal(runs[0].value, text[0]);
+  expect.equal(runs[0].count, 2);
+  expect.equal(runs[1].value, text[2]);
+  expect.equal(runs[1].count, 3);
+  expect.equal(runs[2].value, text[5]);
+  expect.equal(runs[2].count, 1);
+  expect.equal(checkedRuns(runLengthEncode([])).length(), 0);
+  checkRunRoundTrip(text);
+}
+
+@test
+fn runEncodingRoundTripsEverySmallBinaryText(): void {
+  const alphabet = scalarInput("λ🚀");
+  for size in 0..7 {
+    for code in 0..smallPower(2, size) {
+      checkRunRoundTrip(sampleText(size, code, alphabet));
+    }
+  }
+}

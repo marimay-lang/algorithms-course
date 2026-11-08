@@ -1,0 +1,30 @@
+import { Error as IoError, println } from "std/io";
+
+import * as searching from "course.local/algorithms/algorithms/searching";
+
+fn main(): Result<void, IoError> {
+  const values = arrayOf(1, 2, 2, 4, 9);
+  const first = match searching.binarySearch(values, 2) {
+    Some(index) => index,
+    None => panic("binary search missed a present key"),
+  };
+  const last = match searching.lastIndexOf(values, 2) {
+    Some(index) => index,
+    None => panic("last-index search missed a present key"),
+  };
+  if first != 1
+    || last != 2
+    || searching.lowerBound(values, 2) != 1
+    || searching.upperBound(values, 2) != 3 {
+    panic("duplicate search boundaries are incorrect");
+  }
+  const missing = match searching.jumpSearch(values, 5) {
+    Some(_) => false,
+    None => true,
+  };
+  if !missing {
+    panic("missing key unexpectedly found");
+  }
+  println("searching example passed")?;
+  return Ok();
+}

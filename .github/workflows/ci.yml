@@ -13,7 +13,7 @@ jobs:
   linux:
     name: Format, check, and compare VM/native tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       CC: clang
       MMAY: ${{ github.workspace }}/marimay/build/ci/mmay
@@ -45,6 +45,5 @@ jobs:
       - name: Format, type-check, and compare execution engines
         working-directory: project
         run: |
-          "$MMAY" fmt . --check
-          "$MMAY" check . --all-targets
-          "$MMAY" test ./examples/01-linear-scan --engine both
+          python3 -m unittest discover -s tools -p 'test_*.py'
+          python3 tools/verify_algorithms.py --output build/verification.json

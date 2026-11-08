@@ -1,0 +1,77 @@
+/// Maximum value from each item at most once; the empty selection is allowed.
+/// Weights/capacity are nonnegative; values may be negative. Zero-weight items
+/// are considered exactly once. None also reports size or value overflow.
+/// O(items * capacity) time and O(capacity) auxiliary memory.
+public fn knapsack01(weights: []int, values: []int, capacity: int): Option<int> {
+  if capacity < 0 || weights.length() != values.length() {
+    return None;
+  }
+  for weight in weights {
+    if weight < 0 {
+      return None;
+    }
+  }
+  const size = match checkedAdd(capacity, 1) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const best = match integerTable(size, 0) {
+    Some(table) => table,
+    None => {
+      return None;
+    },
+  };
+  for item in 0..weights.length() {
+    const weight = weights[item];
+    if weight <= capacity {
+      let remaining = capacity;
+      while remaining >= weight {
+        const candidate = match checkedAdd(best[remaining - weight], values[item]) {
+          Some(value) => value,
+          None => {
+            return None;
+          },
+        };
+        if candidate > best[remaining] {
+          best[remaining] = candidate;
+        }
+        remaining -= 1;
+      }
+    }
+  }
+  return Some(best[capacity]);
+}
+
+/// Whether a subset of nonnegative values sums to nonnegative target.
+/// None reports invalid parameters or unrepresentable table size.
+/// Descending updates ensure every input value is used at most once.
+public fn subsetSum(values: []int, target: int): Option<bool> {
+  if target < 0 || target == 9223372036854775807 {
+    return None;
+  }
+  for value in values {
+    if value < 0 {
+      return None;
+    }
+  }
+  const size = target + 1;
+  const reachable = match booleanTable(size) {
+    Some(table) => table,
+    None => {
+      return None;
+    },
+  };
+  reachable[0] = true;
+  for value in values {
+    if value <= target {
+      let total = target;
+      while total >= value {
+        reachable[total] = reachable[total] || reachable[total - value];
+        total -= 1;
+      }
+    }
+  }
+  return Some(reachable[target]);
+}

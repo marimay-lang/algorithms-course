@@ -1,0 +1,14 @@
+import { Error as IoError, println } from "std/io";
+
+import * as dynamic from "course.local/algorithms/algorithms/dynamic";
+
+fn main(): Result<void, IoError> {
+  if dynamic.fibonacci(10) != Some(55)
+    || dynamic.minimumCoins([1, 3, 4], 6) != Some(2)
+    || dynamic.knapsack01([2, 3, 4], [4, 5, 7], 5) != Some(9)
+    || dynamic.subsetSum([3, 5, 9], 8) != Some(true) {
+    panic("dynamic programming example produced an unexpected result");
+  }
+  println("dynamic programming example passed")?;
+  return Ok();
+}

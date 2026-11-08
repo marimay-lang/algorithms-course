@@ -1,0 +1,154 @@
+fn sortingTestAppend(values: []int, value: int): void {
+  const added = match values.push(value) {
+    Ok(_) => true,
+    Err(_) => false,
+  };
+  if !added {
+    panic("small sorting test input could not grow");
+  }
+}
+
+fn assertSortArray(actual: []int, expected: []int, label: string): void {
+  if length(actual) != length(expected) {
+    panic(label);
+  }
+  for index in 0..length(expected) {
+    if actual[index] != expected[index] {
+      panic(label);
+    }
+  }
+}
+
+fn requireSortSuccess(result: Result<void, ArrayGrowthError>): void {
+  const succeeded = match result {
+    Ok(_) => true,
+    Err(_) => false,
+  };
+  if !succeeded {
+    panic("small sorting workspace unexpectedly failed to grow");
+  }
+}
+
+fn sortingSmallOracle(values: []int): []int {
+  const output = arrayOf<int>();
+  for key in [-1, 0, 1] {
+    for value in values {
+      if value == key {
+        sortingTestAppend(output, value);
+      }
+    }
+  }
+  return output;
+}
+
+fn checkInPlaceSorts(values: []int, expected: []int): void {
+  const selection = copy(values);
+  selectionSort(selection);
+  assertSortArray(selection, expected, "selection sort failed");
+  const bubble = copy(values);
+  bubbleSort(bubble);
+  assertSortArray(bubble, expected, "bubble sort failed");
+  const cocktail = copy(values);
+  cocktailSort(cocktail);
+  assertSortArray(cocktail, expected, "cocktail sort failed");
+  const gnome = copy(values);
+  gnomeSort(gnome);
+  assertSortArray(gnome, expected, "gnome sort failed");
+  const comb = copy(values);
+  combSort(comb);
+  assertSortArray(comb, expected, "comb sort failed");
+  const shell = copy(values);
+  shellSort(shell);
+  assertSortArray(shell, expected, "shell sort failed");
+  const merged = copy(values);
+  mergeSort(merged);
+  assertSortArray(merged, expected, "bottom-up merge sort failed");
+  const quick = copy(values);
+  requireSortSuccess(quickSort(quick));
+  assertSortArray(quick, expected, "iterative three-way quicksort failed");
+  const radixValues = copy(values);
+  requireSortSuccess(radixSort(radixValues));
+  assertSortArray(radixValues, expected, "signed radix sort failed");
+}
+
+fn requireDistributedSort(result: Option<[]int>, expected: []int): void {
+  match result {
+    Some(values) => assertSortArray(values, expected, "distribution sort failed"),
+    None => panic("valid bounded distribution sort rejected"),
+  };
+}
+
+fn requireDistributionRejected(result: Option<[]int>): void {
+  const rejected = match result {
+    Some(_) => false,
+    None => true,
+  };
+  if !rejected {
+    panic("invalid distribution-sort domain was accepted");
+  }
+}
+
+@test
+fn exhaustiveSmallSorting(): void {
+  let combinations = 1;
+  for size in 0..6 {
+    for encoded in 0..combinations {
+      const values = arrayOf<int>();
+      let remaining = encoded;
+      for index in 0..size {
+        sortingTestAppend(values, remaining % 3 - 1);
+        remaining /= 3;
+      }
+      const expected = sortingSmallOracle(values);
+      checkInPlaceSorts(values, expected);
+      const nonnegative = arrayOf<int>();
+      const orderedNonnegative = arrayOf<int>();
+      for value in values {
+        sortingTestAppend(nonnegative, value + 1);
+      }
+      for value in expected {
+        sortingTestAppend(orderedNonnegative, value + 1);
+      }
+      requireDistributedSort(countingSort(nonnegative, 2), orderedNonnegative);
+      requireDistributedSort(bucketSort(nonnegative, 1, 3), orderedNonnegative);
+    }
+    combinations *= 3;
+  }
+}
+
+@test
+fn sortingMachineIntegerAndByteBoundaries(): void {
+  const maximum = 9_223_372_036_854_775_807;
+  const minimum = -maximum - 1;
+  checkInPlaceSorts(
+    [maximum, 0, minimum, -1, 1, maximum, minimum],
+    [minimum, minimum, -1, 0, 1, maximum, maximum],
+  );
+  checkInPlaceSorts(
+    [257, -256, 128, -257, 255, -128, 256, -255, 127, 0],
+    [-257, -256, -255, -128, 0, 127, 128, 255, 256, 257],
+  );
+}
+
+@test
+fn distributionSortContracts(): void {
+  requireDistributionRejected(countingSort([-1], 3));
+  requireDistributionRejected(countingSort([4], 3));
+  requireDistributionRejected(countingSort([], -1));
+  requireDistributionRejected(countingSort([], 9_223_372_036_854_775_807));
+  requireDistributedSort(countingSort([], 0), []);
+  requireDistributedSort(countingSort([0, 0, 0], 0), [0, 0, 0]);
+  requireDistributionRejected(bucketSort([0], 0, 3));
+  requireDistributionRejected(bucketSort([0], -1, 3));
+  requireDistributionRejected(bucketSort([], 1, 0));
+  requireDistributionRejected(bucketSort([], 1, -1));
+  requireDistributionRejected(bucketSort([-1], 2, 3));
+  requireDistributionRejected(bucketSort([6], 2, 3));
+  requireDistributedSort(bucketSort([], 1, 1), []);
+  requireDistributedSort(
+    bucketSort([11, 0, 8, 4, 9, 1, 3, 10, 2, 7, 6, 5], 3, 4),
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  );
+  const maximum = 9_223_372_036_854_775_807;
+  requireDistributedSort(bucketSort([maximum, 0], maximum, 2), [0, maximum]);
+}

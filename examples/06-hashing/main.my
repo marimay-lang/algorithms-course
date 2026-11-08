@@ -1,0 +1,18 @@
+import { println, Error as IoError } from "std/io";
+
+import * as counting from "course.local/algorithms/algorithms/counting";
+import * as hashing from "course.local/algorithms/algorithms/hashing";
+
+fn main(): Result<void, IoError> {
+  const values = [4, 2, 4, 1, 2];
+  const distinct = hashing.stableUnique(values);
+  if distinct.length() != 3
+    || distinct[0] != 4
+    || distinct[2] != 1
+    || counting.intFrequencies(values).get(4) != Some(2)
+    || hashing.majority([9, 1, 9, 9]) != Some(9) {
+    panic("hashing demonstration");
+  }
+  println("hashing example passed")?;
+  return Ok();
+}

@@ -1,0 +1,135 @@
+/// Strictly increasing subsequence length, O(n^2) time and O(n) memory.
+public fn longestIncreasingSubsequenceLength(values: []int): Option<int> {
+  const lengths = match integerTable(values.length(), 1) {
+    Some(table) => table,
+    None => {
+      return None;
+    },
+  };
+  let best = 0;
+  for index in 0..values.length() {
+    for previous in 0..index {
+      if values[previous] < values[index] && lengths[previous] + 1 > lengths[index] {
+        lengths[index] = lengths[previous] + 1;
+      }
+    }
+    if lengths[index] > best {
+      best = lengths[index];
+    }
+  }
+  return Some(best);
+}
+
+/// LCS length for integer sequences, O(m*n) time and O(n) memory.
+/// Every table entry is bounded by an input length.
+public fn longestCommonSubsequenceLength(left: []int, right: []int): Option<int> {
+  const size = match checkedAdd(right.length(), 1) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const row = match integerTable(size, 0) {
+    Some(table) => table,
+    None => {
+      return None;
+    },
+  };
+  for leftValue in left {
+    let diagonal = 0;
+    for index in 0..right.length() {
+      const above = row[index + 1];
+      if leftValue == right[index] {
+        row[index + 1] = diagonal + 1;
+      } else if row[index] > row[index + 1] {
+        row[index + 1] = row[index];
+      }
+      diagonal = above;
+    }
+  }
+  return Some(row[right.length()]);
+}
+
+/// Unit-cost insert/delete/substitute distance over Unicode scalar arrays.
+/// O(m*n) time and O(n) memory. Positions/counts are runes, not UTF-8 bytes.
+public fn levenshteinDistance(left: []rune, right: []rune): Option<int> {
+  const size = match checkedAdd(right.length(), 1) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const row = match integerTable(size, 0) {
+    Some(table) => table,
+    None => {
+      return None;
+    },
+  };
+  for index in 0..size {
+    row[index] = index;
+  }
+  for leftIndex in 0..left.length() {
+    let diagonal = row[0];
+    row[0] = leftIndex + 1;
+    for rightIndex in 0..right.length() {
+      const above = row[rightIndex + 1];
+      let replacement = diagonal;
+      if left[leftIndex] != right[rightIndex] {
+        replacement = match checkedAdd(diagonal, 1) {
+          Some(value) => value,
+          None => {
+            return None;
+          },
+        };
+      }
+      const deletion = match checkedAdd(above, 1) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+      const insertion = match checkedAdd(row[rightIndex], 1) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+      let distance = replacement;
+      if deletion < distance {
+        distance = deletion;
+      }
+      if insertion < distance {
+        distance = insertion;
+      }
+      row[rightIndex + 1] = distance;
+      diagonal = above;
+    }
+  }
+  return Some(row[right.length()]);
+}
+
+/// Maximum sum of a nonempty contiguous subarray; None for empty input/overflow.
+/// O(n) time and O(1) memory. Discarded negative prefixes cannot underflow.
+public fn maximumSubarray(values: []int): Option<int> {
+  if values.length() == 0 {
+    return None;
+  }
+  let current = values[0];
+  let best = current;
+  for index in 1..values.length() {
+    if current < 0 {
+      current = values[index];
+    } else {
+      current = match checkedAdd(current, values[index]) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+    }
+    if current > best {
+      best = current;
+    }
+  }
+  return Some(best);
+}

@@ -1,0 +1,60 @@
+/// A half-open span [start, start+length) measured in Unicode scalars.
+/// It is not a UTF-8 byte span. Equal-length answers choose the earliest start.
+public type RuneSpan {
+  public start: int,
+  public length: int,
+}
+
+/// Longest palindromic substring by odd/even center expansion.
+/// O(n^2) time, O(1) memory; empty input returns {start:0,length:0}.
+public fn longestPalindrome(text: []rune): RuneSpan {
+  let bestStart = 0;
+  let bestLength = 0;
+  for center in 0..text.length() {
+    for parity in 0..2 {
+      let left = center;
+      let right = center + parity;
+      while left >= 0 && right < text.length() && text[left] == text[right] {
+        const size = right - left + 1;
+        if size > bestLength || (size == bestLength && left < bestStart) {
+          bestStart = left;
+          bestLength = size;
+        }
+        left -= 1;
+        right += 1;
+      }
+    }
+  }
+  return RuneSpan { start: bestStart, length: bestLength };
+}
+
+/// Longest all-distinct rune substring by a sliding window and last-position map.
+/// O(n) expected time, O(distinct runes) memory. None is logical map growth failure.
+public fn longestDistinctSubstring(text: []rune): Option<RuneSpan> {
+  const last = mapOf<rune, int>();
+  let left = 0;
+  let bestStart = 0;
+  let bestLength = 0;
+  for index in 0..text.length() {
+    match last.get(text[index]) {
+      Some(previous) => {
+        if previous >= left {
+          left = previous + 1;
+        }
+      },
+      None => {},
+    };
+    match last.put(text[index], index) {
+      Ok(_) => {},
+      Err(_) => {
+        return None;
+      },
+    };
+    const size = index - left + 1;
+    if size > bestLength {
+      bestStart = left;
+      bestLength = size;
+    }
+  }
+  return Some(RuneSpan { start: bestStart, length: bestLength });
+}

@@ -1,0 +1,66 @@
+@test
+fn searchesDefineEmptyMissingAndRuneOffsets(): void {
+  const text = scalarInput("λ🚀λ東");
+  const pattern = scalarInput("λ東");
+  expect.equal(findNaive(text, pattern), Some(2));
+  expect.equal(findKmp(text, pattern), Some(2));
+  expect.equal(findNaive(text, []), Some(0));
+  expect.equal(findKmp([], []), Some(0));
+  expect.none(findNaive([], pattern));
+  expect.none(findKmp([], pattern));
+  expect.none(findNaive(text, scalarInput("東東")));
+  expect.none(findKmp(text, scalarInput("東東")));
+  expect.equal(findKmp(scalarInput("aaaaab"), scalarInput("aaab")), Some(2));
+  expect.equal(findKmp(scalarInput("ababa"), scalarInput("aba")), Some(0));
+}
+
+@test
+fn kmpAgreesWithNaiveSearchOnEverySmallBinaryText(): void {
+  const alphabet = scalarInput("aλ");
+  for size in 0..7 {
+    for code in 0..smallPower(2, size) {
+      const text = sampleText(size, code, alphabet);
+      for patternSize in 0..4 {
+        for patternCode in 0..smallPower(2, patternSize) {
+          const pattern = sampleText(patternSize, patternCode, alphabet);
+          expect.equal(findKmp(text, pattern), findNaive(text, pattern));
+        }
+      }
+    }
+  }
+}
+
+@test
+fn zValuesHaveExactPrefixLengths(): void {
+  const actual = checkedZ(zValues(scalarInput("ababa")));
+  expect.equal(actual.length(), 5);
+  expect.equal(actual[0], 0);
+  expect.equal(actual[1], 0);
+  expect.equal(actual[2], 3);
+  expect.equal(actual[3], 0);
+  expect.equal(actual[4], 1);
+  const unicode = checkedZ(zValues(scalarInput("🚀λ🚀λ")));
+  expect.equal(unicode[2], 2);
+  expect.equal(checkedZ(zValues([])).length(), 0);
+}
+
+@test
+fn zValuesMatchIndependentQuadraticPrefixChecks(): void {
+  const alphabet = scalarInput("aλ");
+  for size in 0..7 {
+    for code in 0..smallPower(2, size) {
+      const text = sampleText(size, code, alphabet);
+      const actual = checkedZ(zValues(text));
+      expect.equal(actual.length(), text.length());
+      for index in 0..text.length() {
+        let expected = 0;
+        if index > 0 {
+          while expected < text.length() - index && text[expected] == text[index + expected] {
+            expected += 1;
+          }
+        }
+        expect.equal(actual[index], expected);
+      }
+    }
+  }
+}

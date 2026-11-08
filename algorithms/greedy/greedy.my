@@ -1,0 +1,165 @@
+import * as structures from "course.local/algorithms/algorithms/structures";
+
+public type Interval {
+  public start: int,
+  public end: int,
+}
+
+fn sortedIntervals(input: []Interval, byEnd: bool): Option<[]Interval> {
+  const result: []Interval = [];
+  for interval in input {
+    if interval.start > interval.end {
+      return None;
+    }
+    const _ = result.push(interval);
+  }
+  for index in 1..result.length() {
+    const item = result[index];
+    let key = item.start;
+    if byEnd {
+      key = item.end;
+    }
+    let position = index;
+    while position > 0 {
+      const previous = result[position - 1];
+      let previousKey = previous.start;
+      if byEnd {
+        previousKey = previous.end;
+      }
+      if previousKey <= key {
+        break;
+      }
+      result[position] = previous;
+      position -= 1;
+    }
+    result[position] = item;
+  }
+  return Some(result);
+}
+
+// Maximum-cardinality positive-length half-open intervals; touching is allowed.
+public fn intervalSchedule(input: []Interval): Option<[]Interval> {
+  for interval in input {
+    if interval.start >= interval.end {
+      return None;
+    }
+  }
+  const sorted = match sortedIntervals(input, true) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const result: []Interval = [];
+  let previousEnd: Option<int> = None;
+  for interval in sorted {
+    const compatible = match previousEnd {
+      Some(end) => interval.start >= end,
+      None => true,
+    };
+    if compatible {
+      const _ = result.push(interval);
+      previousEnd = Some(interval.end);
+    }
+  }
+  return Some(result);
+}
+
+// Union of closed intervals. Touching endpoints merge; inputs are not mutated.
+public fn mergeIntervals(input: []Interval): Option<[]Interval> {
+  const sorted = match sortedIntervals(input, false) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const result: []Interval = [];
+  for interval in sorted {
+    if result.length() == 0 {
+      const _ = result.push(interval);
+    } else {
+      const last = result[result.length() - 1];
+      if interval.start > last.end {
+        const _ = result.push(interval);
+      } else if interval.end > last.end {
+        result[result.length() - 1] = Interval { start: last.start, end: interval.end };
+      }
+    }
+  }
+  return Some(result);
+}
+
+// Each nonnegative entry is a maximum forward jump; None also means unreachable.
+public fn minimumJumps(values: []int): Option<int> {
+  for value in values {
+    if value < 0 {
+      return None;
+    }
+  }
+  if values.length() <= 1 {
+    return Some(0);
+  }
+  let boundary = 0;
+  let furthest = 0;
+  let jumps = 0;
+  for index in 0..values.length() - 1 {
+    if index > furthest {
+      return None;
+    }
+    const remaining = values.length() - 1 - index;
+    let reach = values.length() - 1;
+    if values[index] < remaining {
+      reach = index + values[index];
+    }
+    if reach > furthest {
+      furthest = reach;
+    }
+    if index == boundary {
+      if furthest == boundary {
+        return None;
+      }
+      jumps += 1;
+      boundary = furthest;
+      if boundary == values.length() - 1 {
+        return Some(jumps);
+      }
+    }
+  }
+  return None;
+}
+
+// Optimal pairwise merging of nonnegative weights (the Huffman greedy step).
+public fn optimalMergeCost(weights: []int): Option<int> {
+  const heap = structures.newMinHeap();
+  for weight in weights {
+    if weight < 0 {
+      return None;
+    }
+    heap.push(weight);
+  }
+  let total = 0;
+  while heap.length() > 1 {
+    const left = match heap.pop() {
+      Some(value) => value,
+      None => panic("heap invariant"),
+    };
+    const right = match heap.pop() {
+      Some(value) => value,
+      None => panic("heap invariant"),
+    };
+    const merged = match checkedAdd(left, right) {
+      Some(value) => value,
+      None => {
+        return None;
+      },
+    };
+    total = match checkedAdd(total, merged) {
+      Some(value) => value,
+      None => {
+        return None;
+      },
+    };
+    heap.push(merged);
+  }
+  return Some(total);
+}

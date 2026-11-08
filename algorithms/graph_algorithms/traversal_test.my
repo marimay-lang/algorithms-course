@@ -1,0 +1,278 @@
+fn require(condition: bool, message: string): void {
+  if !condition {
+    panic(message);
+  }
+}
+
+fn ints(value: Result<[]int, Error>): []int {
+  return match value {
+    Ok(actual) => actual,
+    Err(_) => panic("valid graph rejected"),
+  };
+}
+
+fn pathDistances(value: Result<[]Option<int>, Error>): []Option<int> {
+  return match value {
+    Ok(actual) => actual,
+    Err(_) => panic("valid weighted graph rejected"),
+  };
+}
+
+fn sameDistance(left: Option<int>, right: Option<int>): bool {
+  return match left {
+    None => match right {
+      None => true,
+      Some(_) => false,
+    },
+    Some(value) => match right {
+      None => false,
+      Some(other) => value == other,
+    },
+  };
+}
+
+fn hasDistance(value: Option<int>): bool {
+  return match value {
+    None => false,
+    Some(_) => true,
+  };
+}
+
+@test
+fn traversalOrderPathsAndDisconnectedVertices(): void {
+  const graph: Adjacency = [[1, 2], [3], [], [], []];
+  const order = ints(dfs(graph, 0));
+  require(order.length() == 4, "DFS must visit only reachable vertices");
+  require(
+    order[0] == 0 && order[1] == 1 && order[2] == 3 && order[3] == 2,
+    "DFS neighbor order changed",
+  );
+  const distance = pathDistances(bfsDistances(graph, 0));
+  require(sameDistance(distance[3], Some(2)), "BFS distance must count edges");
+  require(!hasDistance(distance[4]), "unreachable distance must be None");
+  match bfsPath(graph, 0, 3) {
+    Ok(Some(path)) => {
+      require(
+        path.length() == 3 && path[0] == 0 && path[1] == 1 && path[2] == 3,
+        "BFS path is not a shortest route",
+      );
+    },
+    _ => panic("reachable BFS path missing"),
+  };
+  match bfsPath(graph, 0, 0) {
+    Ok(Some(path)) => {
+      require(path.length() == 1 && path[0] == 0, "identity path must contain its vertex");
+    },
+    _ => panic("identity path missing"),
+  };
+  match bfsPath(graph, 0, 4) {
+    Ok(None) => {},
+    _ => panic("unreachable path must be None"),
+  };
+}
+
+@test
+fn unreachableInvalidEdgesAndInvalidStartsAreRejected(): void {
+  const graph: Adjacency = [[1], [], [9]];
+  require(
+    match dfs(graph, 0) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "DFS skipped an unreachable invalid edge",
+  );
+  require(
+    match bfsDistances(graph, 0) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "BFS skipped an unreachable invalid edge",
+  );
+  require(
+    match bfsPath(graph, 0, 0) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "identity path bypassed validation",
+  );
+  require(
+    match topologicalOrder(graph) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "topological order skipped validation",
+  );
+  require(
+    match stronglyConnectedComponents(graph) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "SCC skipped validation",
+  );
+  require(
+    match hasDirectedCycle(graph) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "cycle query hid a malformed graph",
+  );
+  require(
+    match dfs([], 0) {
+      Err(Error.InvalidVertex) => true,
+      _ => false,
+    },
+    "empty traversal start accepted",
+  );
+  require(
+    match bfsDistances([[]], -1) {
+      Err(Error.InvalidVertex) => true,
+      _ => false,
+    },
+    "negative BFS start accepted",
+  );
+  require(
+    match bfsPath([[]], 0, 1) {
+      Err(Error.InvalidVertex) => true,
+      _ => false,
+    },
+    "out-of-range target accepted",
+  );
+}
+
+@test
+fn undirectedComponentsColoringAndMultiplicityContracts(): void {
+  const graph: Adjacency = [[1], [0], [3], [2], []];
+  const labels = ints(connectedComponents(graph));
+  require(
+    labels[0] == labels[1] && labels[2] == labels[3],
+    "connected endpoints received different labels",
+  );
+  require(
+    labels[0] != labels[2] && labels[4] != labels[0] && labels[4] != labels[2],
+    "disconnected components were merged",
+  );
+  const colors = ints(bipartiteColoring(graph));
+  for node in 0..graph.length() {
+    for neighbor in graph[node] {
+      require(colors[node] != colors[neighbor], "bipartite edge has equal colors");
+    }
+  }
+  require(ints(connectedComponents([])).length() == 0, "empty component list must be empty");
+  require(
+    match connectedComponents([[1], []]) {
+      Err(Error.NotUndirected) => true,
+      _ => false,
+    },
+    "asymmetric adjacency accepted",
+  );
+  require(
+    match connectedComponents([[1, 1], [0]]) {
+      Err(Error.NotUndirected) => true,
+      _ => false,
+    },
+    "asymmetric parallel edges accepted",
+  );
+  require(
+    match bipartiteColoring([[1, 2], [0, 2], [0, 1]]) {
+      Err(Error.NotBipartite) => true,
+      _ => false,
+    },
+    "odd cycle colored as bipartite",
+  );
+  require(
+    match bipartiteColoring([[], [1]]) {
+      Err(Error.NotBipartite) => true,
+      _ => false,
+    },
+    "disconnected self-loop was skipped",
+  );
+}
+
+@test
+fn topologicalOrdersRespectEveryEdgeAndCyclesAreExplicit(): void {
+  const graph: Adjacency = [[1, 2], [3], [3], [], []];
+  const order = ints(topologicalOrder(graph));
+  require(order.length() == graph.length(), "topological order lost an isolated vertex");
+  const position = integers(graph.length(), -1);
+  for index in 0..order.length() {
+    require(position[order[index]] == -1, "topological order repeated a vertex");
+    position[order[index]] = index;
+  }
+  for node in 0..graph.length() {
+    for neighbor in graph[node] {
+      require(position[node] < position[neighbor], "topological edge order violated");
+    }
+  }
+  require(
+    match hasDirectedCycle(graph) {
+      Ok(value) => !value,
+      _ => false,
+    },
+    "DAG reported a cycle",
+  );
+  require(
+    match hasDirectedCycle([[1], [0]]) {
+      Ok(value) => value,
+      _ => false,
+    },
+    "directed cycle missed",
+  );
+  require(
+    match topologicalOrder([[0]]) {
+      Err(Error.Cycle) => true,
+      _ => false,
+    },
+    "self-loop received an ordering",
+  );
+  require(ints(topologicalOrder([])).length() == 0, "empty DAG order must be empty");
+}
+
+@test
+fn allThreeVertexDigraphsAgreeOnReachabilityAndSccRelations(): void {
+  for mask in 0..512 {
+    const graph: Adjacency = [];
+    const weighted: WeightedAdjacency = [];
+    let bits = mask;
+    for node in 0..3 {
+      const neighbors: []int = [];
+      const edges: []Edge = [];
+      for target in 0..3 {
+        if bits % 2 == 1 {
+          appendInt(neighbors, target);
+          match edges.push(edge(target, 1)) {
+            Ok(_) => {},
+            Err(_) => panic("small graph fixture overflow"),
+          };
+        }
+        bits /= 2;
+      }
+      match graph.push(neighbors) {
+        Ok(_) => {},
+        Err(_) => panic("small graph fixture overflow"),
+      };
+      match weighted.push(edges) {
+        Ok(_) => {},
+        Err(_) => panic("small graph fixture overflow"),
+      };
+    }
+    const labels = ints(stronglyConnectedComponents(graph));
+    const matrix = match floydWarshall(weighted) {
+      Ok(value) => value,
+      Err(_) => panic("nonnegative graph rejected"),
+    };
+    for source in 0..3 {
+      const breadth = pathDistances(bfsDistances(graph, source));
+      for target in 0..3 {
+        require(
+          sameDistance(breadth[target], matrix[source][target]),
+          "BFS and all-pairs dynamic programming disagree",
+        );
+        const mutual = hasDistance(matrix[source][target]) && hasDistance(matrix[target][source]);
+        require(
+          (labels[source] == labels[target]) == mutual,
+          "SCC labels disagree with mutual reachability",
+        );
+      }
+    }
+  }
+}

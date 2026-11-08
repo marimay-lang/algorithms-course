@@ -1,0 +1,36 @@
+// The stride is computed without floating-point math or overflowing squares.
+public fn jumpSearch(values: []int, target: int): Option<int> {
+  const size = length(values);
+  if size == 0 {
+    return None;
+  }
+  let stride = 1;
+  while stride < size / stride {
+    stride += 1;
+  }
+  let start = 0;
+  let end = stride;
+  if end > size {
+    end = size;
+  }
+  while values[end - 1] < target {
+    start = end;
+    if start == size {
+      return None;
+    }
+    if stride > size - end {
+      end = size;
+    } else {
+      end += stride;
+    }
+  }
+  for index in start..end {
+    if values[index] == target {
+      return Some(index);
+    }
+    if values[index] > target {
+      return None;
+    }
+  }
+  return None;
+}

@@ -1,0 +1,15 @@
+import { println, Error as IoError } from "std/io";
+
+import * as numeric from "course.local/algorithms/algorithms/numeric";
+
+fn main(): Result<void, IoError> {
+  if numeric.gcd(54, 24) != Some(6)
+    || numeric.lcm(21, 6) != Some(42)
+    || numeric.modularPower(2, 10, 1000) != Some(24)
+    || numeric.integerSquareRoot(9223372036854775807) != Some(3037000499)
+    || numeric.binomial(5, 2) != Some(10) {
+    panic("integer mathematics");
+  }
+  println("number theory example passed")?;
+  return Ok();
+}

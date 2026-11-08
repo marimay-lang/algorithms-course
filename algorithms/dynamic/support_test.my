@@ -1,0 +1,26 @@
+import { runes } from "std/text";
+
+fn scalarInput(text: string): []rune {
+  return match runes(text, 1024) {
+    Ok(values) => values,
+    Err(_) => panic("invalid test rune input"),
+  };
+}
+
+fn sampleVector(size: int, code: int, base: int, offset: int): []int {
+  const values = arrayOf<int>();
+  let remaining = code;
+  for index in 0..size {
+    expect.ok(values.push(remaining % base + offset));
+    remaining /= base;
+  }
+  return values;
+}
+
+fn smallPower(base: int, exponent: int): int {
+  let value = 1;
+  for index in 0..exponent {
+    value *= base;
+  }
+  return value;
+}

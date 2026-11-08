@@ -1,0 +1,19 @@
+public fn linearSearch(values: []int, target: int): Option<int> {
+  for index in 0..length(values) {
+    if values[index] == target {
+      return Some(index);
+    }
+  }
+  return None;
+}
+
+public fn lastIndexOf(values: []int, target: int): Option<int> {
+  let position = length(values);
+  while position > 0 {
+    position -= 1;
+    if values[position] == target {
+      return Some(position);
+    }
+  }
+  return None;
+}

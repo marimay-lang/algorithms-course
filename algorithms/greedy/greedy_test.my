@@ -1,0 +1,117 @@
+@test
+fn intervalsValidateAndPreserveInput(): void {
+  const input = [
+    Interval { start: 5, end: 7 },
+    Interval { start: 1, end: 3 },
+    Interval { start: 2, end: 5 },
+    Interval { start: 3, end: 4 },
+  ];
+  const schedule = match intervalSchedule(input) {
+    Some(value) => value,
+    None => panic("schedule"),
+  };
+  expect.equal(schedule.length(), 3);
+  expect.equal(schedule[0].start, 1);
+  expect.equal(schedule[1].start, 3);
+  expect.equal(schedule[2].start, 5);
+  expect.equal(input[0].start, 5);
+  const merged = match mergeIntervals(input) {
+    Some(value) => value,
+    None => panic("union"),
+  };
+  expect.equal(merged.length(), 1);
+  expect.equal(merged[0].start, 1);
+  expect.equal(merged[0].end, 7);
+  expect.none(intervalSchedule([Interval { start: 2, end: 1 }]));
+  expect.none(mergeIntervals([Interval { start: 2, end: 1 }]));
+  const empty = match intervalSchedule([]) {
+    Some(value) => value,
+    None => panic("empty"),
+  };
+  expect.equal(empty.length(), 0);
+}
+
+@test
+fn intervalSchedulingMatchesSubsetOracle(): void {
+  for seed in 0..20 {
+    const intervals: []Interval = [];
+    for index in 0..5 {
+      const start = (seed + index * 3) % 8;
+      const _ = intervals.push(Interval { start: start, end: start + 1 + index % 3 });
+    }
+    let best = 0;
+    for subset in 0..32 {
+      let bits = subset;
+      const chosen: []bool = [];
+      let count = 0;
+      for index in 0..5 {
+        const take = bits % 2 == 1;
+        const _ = chosen.push(take);
+        if take {
+          count += 1;
+        }
+        bits /= 2;
+      }
+      let compatible = true;
+      for left in 0..5 {
+        for right in left + 1..5 {
+          if chosen[left]
+            && chosen[right]
+            && intervals[left].start < intervals[right].end
+            && intervals[right].start < intervals[left].end {
+            compatible = false;
+          }
+        }
+      }
+      if compatible && count > best {
+        best = count;
+      }
+    }
+    const actual = match intervalSchedule(intervals) {
+      Some(value) => value,
+      None => panic("schedule"),
+    };
+    expect.equal(actual.length(), best);
+  }
+}
+
+@test
+fn jumpLayersMatchDynamicOracle(): void {
+  expect.equal(minimumJumps([]), Some(0));
+  expect.equal(minimumJumps([0]), Some(0));
+  expect.equal(minimumJumps([0, 1]), None);
+  expect.equal(minimumJumps([2, -1]), None);
+  expect.equal(minimumJumps([9223372036854775807, 0]), Some(1));
+  for seed in 0..50 {
+    const values: []int = [];
+    const distance: []int = [0];
+    for index in 0..8 {
+      const _ = values.push((seed + index * index) % 4);
+      if index > 0 {
+        const _ = distance.push(100);
+      }
+    }
+    for right in 1..8 {
+      for left in 0..right {
+        if right - left <= values[left] && distance[left] + 1 < distance[right] {
+          distance[right] = distance[left] + 1;
+        }
+      }
+    }
+    if distance[7] == 100 {
+      expect.equal(minimumJumps(values), None);
+    } else {
+      expect.equal(minimumJumps(values), Some(distance[7]));
+    }
+  }
+}
+
+@test
+fn mergeCostsAndOverflow(): void {
+  expect.equal(optimalMergeCost([]), Some(0));
+  expect.equal(optimalMergeCost([7]), Some(0));
+  expect.equal(optimalMergeCost([1, 2, 3, 4]), Some(19));
+  expect.equal(optimalMergeCost([5, 5, 5]), Some(25));
+  expect.equal(optimalMergeCost([-1]), None);
+  expect.equal(optimalMergeCost([9223372036854775807, 1]), None);
+}

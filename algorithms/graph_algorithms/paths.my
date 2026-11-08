@@ -1,0 +1,186 @@
+// Unreachable vertices are None. Every representable path sum is checked.
+public fn dagShortestPaths(graph: WeightedAdjacency, start: int): Result<[]Option<int>, Error> {
+  validateWeighted(graph)?;
+  validStart(graph.length(), start)?;
+  const order = topologicalOrder(asAdjacency(graph))?;
+  const result = distances(graph.length());
+  result[start] = Some(0);
+  for node in order {
+    match result[node] {
+      None => {},
+      Some(base) => {
+        for current in graph[node] {
+          const candidate = plus(base, current.weight)?;
+          const better = match result[current.to] {
+            None => true,
+            Some(previous) => candidate < previous,
+          };
+          if better {
+            result[current.to] = Some(candidate);
+          }
+        }
+      },
+    };
+  }
+  return Ok(result);
+}
+
+// Negative cycles are rejected only when reachable from start.
+public fn bellmanFord(graph: WeightedAdjacency, start: int): Result<[]Option<int>, Error> {
+  validateWeighted(graph)?;
+  validStart(graph.length(), start)?;
+  const result = distances(graph.length());
+  result[start] = Some(0);
+  for pass in 1..graph.length() {
+    let changed = false;
+    for node in 0..graph.length() {
+      match result[node] {
+        None => {},
+        Some(base) => {
+          for current in graph[node] {
+            const candidate = plus(base, current.weight)?;
+            const better = match result[current.to] {
+              None => true,
+              Some(previous) => candidate < previous,
+            };
+            if better {
+              result[current.to] = Some(candidate);
+              changed = true;
+            }
+          }
+        },
+      };
+    }
+    if !changed {
+      break;
+    }
+  }
+  for node in 0..graph.length() {
+    match result[node] {
+      None => {},
+      Some(base) => {
+        for current in graph[node] {
+          const candidate = plus(base, current.weight)?;
+          const better = match result[current.to] {
+            None => true,
+            Some(previous) => candidate < previous,
+          };
+          if better {
+            return Err(Error.NegativeCycle);
+          }
+        }
+      },
+    };
+  }
+  return Ok(result);
+}
+
+// Dense reference implementation: O(V^2 + E), with complete weight validation.
+public fn dijkstra(graph: WeightedAdjacency, start: int): Result<[]Option<int>, Error> {
+  validateWeighted(graph)?;
+  validStart(graph.length(), start)?;
+  for neighbors in graph {
+    for current in neighbors {
+      if current.weight < 0 {
+        return Err(Error.NegativeWeight);
+      }
+    }
+  }
+  const result = distances(graph.length());
+  const settled = flags(graph.length());
+  result[start] = Some(0);
+  for iteration in 0..graph.length() {
+    let selected: Option<int> = None;
+    for node in 0..graph.length() {
+      if !settled[node] {
+        match result[node] {
+          None => {},
+          Some(candidate) => {
+            const better = match selected {
+              None => true,
+              Some(previous) => candidate < present(result[previous]),
+            };
+            if better {
+              selected = Some(node);
+            }
+          },
+        };
+      }
+    }
+    match selected {
+      None => {
+        break;
+      },
+      Some(node) => {
+        settled[node] = true;
+        const base = present(result[node]);
+        for current in graph[node] {
+          if !settled[current.to] {
+            const candidate = plus(base, current.weight)?;
+            const better = match result[current.to] {
+              None => true,
+              Some(previous) => candidate < previous,
+            };
+            if better {
+              result[current.to] = Some(candidate);
+            }
+          }
+        }
+      },
+    };
+  }
+  return Ok(result);
+}
+
+// Rejects a negative cycle anywhere, including disconnected components.
+public fn floydWarshall(graph: WeightedAdjacency): Result<[][]Option<int>, Error> {
+  validateWeighted(graph)?;
+  const result: [][]Option<int> = [];
+  for node in 0..graph.length() {
+    const row = distances(graph.length());
+    row[node] = Some(0);
+    for current in graph[node] {
+      const better = match row[current.to] {
+        None => true,
+        Some(previous) => current.weight < previous,
+      };
+      if better {
+        row[current.to] = Some(current.weight);
+      }
+    }
+    match result.push(row) {
+      Ok(_) => {},
+      Err(_) => panic("bounded distance matrix exceeded its vertex count"),
+    };
+  }
+  for via in 0..graph.length() {
+    for source in 0..graph.length() {
+      match result[source][via] {
+        None => {},
+        Some(left) => {
+          for target in 0..graph.length() {
+            match result[via][target] {
+              None => {},
+              Some(right) => {
+                const candidate = plus(left, right)?;
+                const better = match result[source][target] {
+                  None => true,
+                  Some(previous) => candidate < previous,
+                };
+                if better {
+                  result[source][target] = Some(candidate);
+                }
+              },
+            };
+          }
+        },
+      };
+    }
+  }
+  for node in 0..graph.length() {
+    if present(result[node][node]) < 0 {
+      return Err(Error.NegativeCycle);
+    }
+  }
+  return Ok(result);
+}

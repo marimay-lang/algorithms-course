@@ -13,7 +13,7 @@ files can access it.
 ## Contract
 
 - If present, return `Some(index)` for the first occurrence.
-- If absent, return `None<int>()`, the spelling used by this preview compiler.
+- If absent, return `None` (or explicitly typed `None<int>()`).
 - Indices start at zero.
 - Any `int` array, including an empty array, is valid; sorting is not assumed.
 - Do not modify the input array.

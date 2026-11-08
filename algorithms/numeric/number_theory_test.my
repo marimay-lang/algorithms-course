@@ -1,0 +1,104 @@
+@test
+fn euclideanArithmeticAndOverflow(): void {
+  expect.equal(gcd(0, 0), Some(0));
+  expect.equal(gcd(54, 24), Some(6));
+  expect.equal(gcd(-1, 2), None);
+  expect.equal(lcm(21, 6), Some(42));
+  expect.equal(lcm(0, 0), Some(0));
+  expect.equal(lcm(9223372036854775807, 2), None);
+  expect.equal(power(-2, 3), Some(-8));
+  expect.equal(power(0, 0), Some(1));
+  expect.equal(power(2, 63), None);
+  expect.equal(power(-2, 63), Some(-9223372036854775807 - 1));
+  expect.equal(power(2, -1), None);
+  for a in 0..25 {
+    for b in 1..25 {
+      const divisor = match gcd(a, b) {
+        Some(value) => value,
+        None => panic("gcd"),
+      };
+      expect.equal(a % divisor, 0);
+      expect.equal(b % divisor, 0);
+      let oracle = 1;
+      for candidate in 1..=b {
+        if a % candidate == 0 && b % candidate == 0 {
+          oracle = candidate;
+        }
+      }
+      expect.equal(divisor, oracle);
+    }
+  }
+}
+
+@test
+fn modularPowerAvoidsIntermediateOverflow(): void {
+  expect.equal(modularPower(9223372036854775806, 2, 9223372036854775807), Some(1));
+  expect.equal(modularPower(0, 0, 1), Some(0));
+  expect.equal(modularPower(2, 10, 1000), Some(24));
+  expect.equal(modularPower(-1, 2, 3), None);
+  expect.equal(modularPower(2, 2, 0), None);
+  for base in 0..10 {
+    for modulus in 1..12 {
+      let oracle = 1 % modulus;
+      for exponent in 0..12 {
+        expect.equal(modularPower(base, exponent, modulus), Some(oracle));
+        oracle = oracle * base % modulus;
+      }
+    }
+  }
+}
+
+@test
+fn sieveAndFactorizationAgreeWithTrialDivision(): void {
+  expect.none(sieve(-1));
+  expect.none(primeFactors(0));
+  const primes = match sieve(150) {
+    Some(value) => value,
+    None => panic("sieve"),
+  };
+  let index = 0;
+  for value in 0..150 {
+    let oracle = value >= 2;
+    for divisor in 2..value {
+      if value % divisor == 0 {
+        oracle = false;
+      }
+    }
+    expect.equal(isPrime(value), oracle);
+    if oracle {
+      expect.equal(primes[index], value);
+      index += 1;
+    }
+    if value >= 1 {
+      const factors = match primeFactors(value) {
+        Some(result) => result,
+        None => panic("factorization"),
+      };
+      let product = 1;
+      for factor in factors {
+        expect.true(isPrime(factor));
+        product *= factor;
+      }
+      expect.equal(product, value);
+    }
+  }
+  expect.equal(index, primes.length());
+}
+
+@test
+fn binomialAndSquareRootBoundaries(): void {
+  expect.equal(binomial(5, 2), Some(10));
+  expect.equal(binomial(0, 0), Some(1));
+  expect.equal(binomial(4, 5), None);
+  expect.equal(binomial(67, 33), None);
+  expect.equal(integerSquareRoot(-1), None);
+  expect.equal(integerSquareRoot(9223372036854775807), Some(3037000499));
+  for value in 0..2000 {
+    const root = match integerSquareRoot(value) {
+      Some(result) => result,
+      None => panic("sqrt"),
+    };
+    expect.true(root * root <= value);
+    expect.true((root + 1) * (root + 1) > value);
+  }
+}

@@ -1,0 +1,36 @@
+import { Error as IoError, println } from "std/io";
+
+import * as ranges from "course.local/algorithms/algorithms/range_structures";
+
+fn main(): Result<void, IoError> {
+  const values = [3, -1, 4, 2];
+  const binary = match ranges.newFenwick(values) {
+    Ok(value) => value,
+    Err(_) => panic("valid Fenwick construction failed"),
+  };
+  const segment = match ranges.newSegmentTree(values) {
+    Ok(value) => value,
+    Err(_) => panic("valid segment construction failed"),
+  };
+  const table = match ranges.newSparseTable(values) {
+    Ok(value) => value,
+    Err(_) => panic("valid sparse table construction failed"),
+  };
+  const sum = match binary.prefixSum(3) {
+    Ok(value) => value,
+    Err(_) => panic("valid prefix rejected"),
+  };
+  const middle = match segment.rangeSum(1, 3) {
+    Ok(value) => value,
+    Err(_) => panic("valid range rejected"),
+  };
+  const smallest = match table.minimum(0, 4) {
+    Ok(value) => value,
+    Err(_) => panic("valid minimum rejected"),
+  };
+  if sum != 6 || middle != 3 || smallest != -1 {
+    panic("range example result differs from direct calculation");
+  }
+  println("range queries example passed")?;
+  return Ok();
+}

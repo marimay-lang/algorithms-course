@@ -1,0 +1,22 @@
+import { println, Error as IoError } from "std/io";
+
+import * as greedy from "course.local/algorithms/algorithms/greedy";
+
+fn main(): Result<void, IoError> {
+  const intervals = [
+    greedy.Interval { start: 1, end: 3 },
+    greedy.Interval { start: 2, end: 5 },
+    greedy.Interval { start: 3, end: 4 },
+  ];
+  const schedule = match greedy.intervalSchedule(intervals) {
+    Some(value) => value,
+    None => panic("schedule"),
+  };
+  if schedule.length() != 2
+    || greedy.minimumJumps([2, 3, 1, 1, 4]) != Some(2)
+    || greedy.optimalMergeCost([1, 2, 3, 4]) != Some(19) {
+    panic("greedy demonstration");
+  }
+  println("greedy example passed")?;
+  return Ok();
+}

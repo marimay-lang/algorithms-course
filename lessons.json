@@ -1,0 +1,50 @@
+[
+  {
+    "path": "examples/01-linear-scan",
+    "stdout": "3\nlinear scan example passed\n"
+  },
+  {
+    "path": "examples/02-searching",
+    "stdout": "searching example passed\n"
+  },
+  {
+    "path": "examples/03-sorting",
+    "stdout": "sorting example passed\n"
+  },
+  {
+    "path": "examples/04-data-structures",
+    "stdout": "data structures example passed\n"
+  },
+  {
+    "path": "examples/05-sequences",
+    "stdout": "sequences example passed\n"
+  },
+  {
+    "path": "examples/06-hashing",
+    "stdout": "hashing example passed\n"
+  },
+  {
+    "path": "examples/07-number-theory",
+    "stdout": "number theory example passed\n"
+  },
+  {
+    "path": "examples/08-graphs",
+    "stdout": "graphs example passed\n"
+  },
+  {
+    "path": "examples/09-range-queries",
+    "stdout": "range queries example passed\n"
+  },
+  {
+    "path": "examples/10-dynamic-programming",
+    "stdout": "dynamic programming example passed\n"
+  },
+  {
+    "path": "examples/11-text",
+    "stdout": "text example passed\n"
+  },
+  {
+    "path": "examples/12-greedy",
+    "stdout": "greedy example passed\n"
+  }
+]

@@ -1,0 +1,68 @@
+public type Dsu {
+  parent: []int,
+  rank: []int,
+  mutable componentsValue: int,
+}
+
+// Constructor precondition: nonnegative size. Element APIs require valid indices.
+public fn newDsu(size: int): Dsu {
+  if size < 0 {
+    panic("DSU size must be nonnegative");
+  }
+  let parent = arrayOf<int>();
+  let rank = arrayOf<int>();
+  for index in 0..size {
+    const _ = push(parent, index);
+    const _ = push(rank, 0);
+  }
+  return Dsu { parent, rank, componentsValue: size };
+}
+
+public fn find(dsu: Dsu, value: int): int {
+  let root = value;
+  while dsu.parent[root] != root {
+    root = dsu.parent[root];
+  }
+  let current = value;
+  while dsu.parent[current] != current {
+    const next = dsu.parent[current];
+    dsu.parent[current] = root;
+    current = next;
+  }
+  return root;
+}
+
+public fn union(dsu: Dsu, left: int, right: int): bool {
+  let leftRoot = dsu.find(left);
+  let rightRoot = dsu.find(right);
+  if leftRoot == rightRoot {
+    return false;
+  }
+  if dsu.rank[leftRoot] < dsu.rank[rightRoot] {
+    const temporary = leftRoot;
+    leftRoot = rightRoot;
+    rightRoot = temporary;
+  }
+  dsu.parent[rightRoot] = leftRoot;
+  if dsu.rank[leftRoot] == dsu.rank[rightRoot] {
+    dsu.rank[leftRoot] += 1;
+  }
+  dsu.componentsValue -= 1;
+  return true;
+}
+
+public fn connected(dsu: Dsu, left: int, right: int): bool {
+  return dsu.find(left) == dsu.find(right);
+}
+
+public fn components(dsu: Dsu): int {
+  return dsu.componentsValue;
+}
+
+// Validated constructor for callers accepting external sizes.
+public fn tryNewDsu(size: int): Option<Dsu> {
+  if size < 0 {
+    return None;
+  }
+  return Some(newDsu(size));
+}

@@ -1,0 +1,93 @@
+/// Fibonacci F(0)=0, F(1)=1; None for a negative index or i64 overflow.
+/// O(n) time, O(1) auxiliary memory; no recursive calls.
+public fn fibonacci(index: int): Option<int> {
+  if index < 0 {
+    return None;
+  }
+  if index == 0 {
+    return Some(0);
+  }
+  let previous = 0;
+  let current = 1;
+  for step in 1..index {
+    const next = match checkedAdd(previous, current) {
+      Some(value) => value,
+      None => {
+        return None;
+      },
+    };
+    previous = current;
+    current = next;
+  }
+  return Some(current);
+}
+
+/// Minimum number of unlimited coins. Denominations must be positive/distinct.
+/// None means invalid parameters, unreachable amount or table-size overflow.
+/// O(coins.length()^2 + (amount+1)*coins.length()) time including validation.
+/// O(amount+1) auxiliary memory.
+public fn minimumCoins(coins: []int, amount: int): Option<int> {
+  if amount < 0 || !positiveDistinctCoins(coins) {
+    return None;
+  }
+  const size = match checkedAdd(amount, 1) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const best = match integerTable(size, -1) {
+    Some(values) => values,
+    None => {
+      return None;
+    },
+  };
+  best[0] = 0;
+  for total in 1..size {
+    for coin in coins {
+      if coin <= total && best[total - coin] >= 0 {
+        const candidate = best[total - coin] + 1;
+        if best[total] < 0 || candidate < best[total] {
+          best[total] = candidate;
+        }
+      }
+    }
+  }
+  if best[amount] < 0 {
+    return None;
+  }
+  return Some(best[amount]);
+}
+
+/// Count unordered unlimited-coin combinations, with positive distinct coins.
+/// None means invalid parameters, table-size overflow or any count overflow.
+/// The empty combination is the single way to make amount zero.
+public fn countCoinCombinations(coins: []int, amount: int): Option<int> {
+  if amount < 0 || !positiveDistinctCoins(coins) {
+    return None;
+  }
+  const size = match checkedAdd(amount, 1) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  const ways = match integerTable(size, 0) {
+    Some(values) => values,
+    None => {
+      return None;
+    },
+  };
+  ways[0] = 1;
+  for coin in coins {
+    for total in coin..size {
+      ways[total] = match checkedAdd(ways[total], ways[total - coin]) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+    }
+  }
+  return Some(ways[amount]);
+}

@@ -1,0 +1,85 @@
+// Return a new sorted array. The caller supplies the largest allowed key;
+// negative keys, invalid bounds, or keys outside that domain return None.
+public fn countingSort(values: []int, maximumKey: int): Option<[]int> {
+  const maximumInt = 9_223_372_036_854_775_807;
+  if maximumKey < 0 || maximumKey == maximumInt {
+    return None;
+  }
+  for value in values {
+    if value < 0 || value > maximumKey {
+      return None;
+    }
+  }
+  const counts = arrayOf<int>();
+  for key in 0..(maximumKey + 1) {
+    const added = match counts.push(0) {
+      Ok(_) => true,
+      Err(_) => false,
+    };
+    if !added {
+      return None;
+    }
+  }
+  for value in values {
+    counts[value] += 1;
+  }
+  const output = arrayOf<int>();
+  for key in 0..length(counts) {
+    for repetition in 0..counts[key] {
+      const added = match output.push(key) {
+        Ok(_) => true,
+        Err(_) => false,
+      };
+      if !added {
+        return None;
+      }
+    }
+  }
+  return Some(output);
+}
+
+// Bucket i contains nonnegative keys whose value / bucketWidth is i.
+// Bounds are checked with division, avoiding bucketCount * bucketWidth overflow.
+public fn bucketSort(values: []int, bucketWidth: int, bucketCount: int): Option<[]int> {
+  if bucketWidth <= 0 || bucketCount <= 0 {
+    return None;
+  }
+  for value in values {
+    if value < 0 || value / bucketWidth >= bucketCount {
+      return None;
+    }
+  }
+  const buckets = arrayOf<[]int>();
+  for index in 0..bucketCount {
+    const added = match buckets.push(arrayOf<int>()) {
+      Ok(_) => true,
+      Err(_) => false,
+    };
+    if !added {
+      return None;
+    }
+  }
+  for value in values {
+    const added = match buckets[value / bucketWidth].push(value) {
+      Ok(_) => true,
+      Err(_) => false,
+    };
+    if !added {
+      return None;
+    }
+  }
+  const output = arrayOf<int>();
+  for bucket in buckets {
+    insertionSort(bucket);
+    for value in bucket {
+      const added = match output.push(value) {
+        Ok(_) => true,
+        Err(_) => false,
+      };
+      if !added {
+        return None;
+      }
+    }
+  }
+  return Some(output);
+}

@@ -1,0 +1,238 @@
+fn require(condition: bool, message: string): void {
+  if !condition {
+    panic(message);
+  }
+}
+
+fn fenwick(values: []int): FenwickTree {
+  return match newFenwick(values) {
+    Ok(value) => value,
+    Err(_) => panic("small Fenwick fixture rejected"),
+  };
+}
+
+fn segment(values: []int): SegmentTree {
+  return match newSegmentTree(values) {
+    Ok(value) => value,
+    Err(_) => panic("small segment fixture rejected"),
+  };
+}
+
+fn sparse(values: []int): SparseTable {
+  return match newSparseTable(values) {
+    Ok(value) => value,
+    Err(_) => panic("small sparse-table fixture rejected"),
+  };
+}
+
+fn result(value: Result<int, Error>): int {
+  return match value {
+    Ok(actual) => actual,
+    Err(_) => panic("valid range query rejected"),
+  };
+}
+
+fn naiveSum(values: []int, start: int, end: int): int {
+  let value = 0;
+  for index in start..end {
+    value += values[index];
+  }
+  return value;
+}
+
+@test
+fn updatesMatchDirectArrayQueriesAcrossEveryInterval(): void {
+  const values = [3, -2, 7, 0, 4, -6, 1];
+  const binary = fenwick(values);
+  const intervals = segment(values);
+  for round in 0..28 {
+    const index = round % values.length();
+    const delta = round % 7 - 3;
+    values[index] += delta;
+    require(
+      match binary.add(index, delta) {
+        Ok(_) => true,
+        Err(_) => false,
+      },
+      "bounded Fenwick update failed",
+    );
+    require(
+      match intervals.set(index, values[index]) {
+        Ok(_) => true,
+        Err(_) => false,
+      },
+      "bounded segment update failed",
+    );
+    for start in 0..values.length() + 1 {
+      for end in start..values.length() + 1 {
+        const expected = naiveSum(values, start, end);
+        const fromPrefixes = result(binary.prefixSum(end)) - result(binary.prefixSum(start));
+        require(fromPrefixes == expected, "Fenwick disagrees with direct array summation");
+        require(
+          result(intervals.rangeSum(start, end)) == expected,
+          "segment tree disagrees with direct array summation",
+        );
+      }
+    }
+  }
+}
+
+@test
+fn sparseQueriesMatchEveryNonemptyDirectMinimum(): void {
+  const values = [8, -3, -3, 5, 0, 9, -1];
+  const table = sparse(values);
+  for start in 0..values.length() {
+    for end in start + 1..values.length() + 1 {
+      let expected = values[start];
+      for index in start..end {
+        if values[index] < expected {
+          expected = values[index];
+        }
+      }
+      require(
+        result(table.minimum(start, end)) == expected,
+        "sparse table disagrees with a direct scan",
+      );
+    }
+  }
+  values[0] = -100;
+  require(result(table.minimum(0, 1)) == 8, "sparse table retained mutable input storage");
+}
+
+@test
+fn constructorsOwnInputsAndAliasesShareStructureState(): void {
+  const input = [2, 4];
+  const binary = fenwick(input);
+  const intervals = segment(input);
+  input[0] = 100;
+  require(
+    result(binary.prefixSum(2)) == 6 && result(intervals.rangeSum(0, 2)) == 6,
+    "constructor did not copy source values",
+  );
+  const alias = binary;
+  require(
+    match alias.add(0, 3) {
+      Ok(_) => true,
+      Err(_) => false,
+    },
+    "alias update failed",
+  );
+  require(result(binary.prefixSum(1)) == 5, "record alias lost update identity");
+}
+
+@test
+fn invalidAndEmptyRangesHaveExplicitResults(): void {
+  const binary = fenwick([]);
+  const intervals = segment([]);
+  const table = sparse([]);
+  require(
+    binary.length() == 0 && intervals.length() == 0 && table.length() == 0,
+    "empty structure length incorrect",
+  );
+  require(
+    result(binary.prefixSum(0)) == 0 && result(intervals.rangeSum(0, 0)) == 0,
+    "empty sum must be zero",
+  );
+  require(
+    match table.minimum(0, 0) {
+      Err(Error.EmptyRange) => true,
+      _ => false,
+    },
+    "empty minimum accepted",
+  );
+  require(
+    match binary.add(0, 1) {
+      Err(Error.InvalidIndex) => true,
+      _ => false,
+    },
+    "empty Fenwick update accepted",
+  );
+  require(
+    match intervals.set(-1, 1) {
+      Err(Error.InvalidIndex) => true,
+      _ => false,
+    },
+    "negative segment index accepted",
+  );
+  require(
+    match binary.prefixSum(-1) {
+      Err(Error.InvalidRange) => true,
+      _ => false,
+    },
+    "negative prefix accepted",
+  );
+  const one = segment([5]);
+  require(
+    match one.rangeSum(1, 0) {
+      Err(Error.InvalidRange) => true,
+      _ => false,
+    },
+    "reversed range accepted",
+  );
+  require(
+    match one.rangeSum(0, 2) {
+      Err(Error.InvalidRange) => true,
+      _ => false,
+    },
+    "past-end range accepted",
+  );
+  require(
+    match sparse([5]).minimum(0, 2) {
+      Err(Error.InvalidRange) => true,
+      _ => false,
+    },
+    "past-end minimum accepted",
+  );
+}
+
+@test
+fn overflowingUpdatesLeaveEveryAffectedCellUnchanged(): void {
+  const maximum: int = 9_223_372_036_854_775_807;
+  const binary = fenwick([0, maximum]);
+  require(
+    match binary.add(0, 1) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "Fenwick overflow not reported",
+  );
+  require(
+    result(binary.prefixSum(1)) == 0 && result(binary.prefixSum(2)) == maximum,
+    "Fenwick partially committed a failed update",
+  );
+  const cancelled = fenwick([-maximum, maximum]);
+  require(
+    match cancelled.add(1, 1) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "point overflow hidden by a cancelling aggregate",
+  );
+  require(result(cancelled.prefixSum(2)) == 0, "failed point overflow changed the aggregate");
+  const intervals = segment([0, maximum]);
+  require(
+    match intervals.set(0, 1) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "segment overflow not reported",
+  );
+  require(
+    result(intervals.rangeSum(0, 1)) == 0 && result(intervals.rangeSum(0, 2)) == maximum,
+    "segment tree partially committed a failed update",
+  );
+  require(
+    match newFenwick([maximum, 1]) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "overflowing Fenwick construction accepted",
+  );
+  require(
+    match newSegmentTree([maximum, 1]) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "overflowing segment construction accepted",
+  );
+}

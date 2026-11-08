@@ -1,0 +1,181 @@
+// Finite adjacency-list algorithms. Vertices are zero-based array indices.
+// Every public operation validates every edge, including unreachable rows.
+public type Adjacency = [][]int;
+
+public type Edge {
+  public to: int,
+  public weight: int,
+}
+
+public type WeightedAdjacency = [][]Edge;
+
+public type TreeEdge {
+  public source: int,
+  public target: int,
+  public weight: int,
+}
+
+public type SpanningTree {
+  public totalWeight: int,
+  public edges: []TreeEdge,
+}
+
+public enum Error {
+  InvalidVertex,
+  InvalidEndpoint,
+  NotUndirected,
+  NegativeWeight,
+  Cycle,
+  NegativeCycle,
+  NotBipartite,
+  Disconnected,
+  ArithmeticOverflow,
+  CapacityExceeded,
+}
+
+public fn edge(to: int, weight: int): Edge {
+  return Edge { to, weight };
+}
+
+fn appendInt(values: []int, value: int): void {
+  match values.push(value) {
+    Ok(_) => {},
+    Err(_) => panic("bounded graph array exceeded the source vertex count"),
+  };
+}
+
+fn integers(size: int, value: int): []int {
+  const values: []int = [];
+  for index in 0..size {
+    appendInt(values, value);
+  }
+  return values;
+}
+
+fn flags(size: int): []bool {
+  const values: []bool = [];
+  for index in 0..size {
+    match values.push(false) {
+      Ok(_) => {},
+      Err(_) => panic("bounded graph flags exceeded the source vertex count"),
+    };
+  }
+  return values;
+}
+
+fn distances(size: int): []Option<int> {
+  const values: []Option<int> = [];
+  for index in 0..size {
+    match values.push(None<int>()) {
+      Ok(_) => {},
+      Err(_) => panic("bounded distance array exceeded the source vertex count"),
+    };
+  }
+  return values;
+}
+
+fn present(value: Option<int>): int {
+  return match value {
+    Some(actual) => actual,
+    None => panic("graph invariant requires a present distance"),
+  };
+}
+
+fn plus(left: int, right: int): Result<int, Error> {
+  return match checkedAdd(left, right) {
+    Some(value) => Ok(value),
+    None => Err(Error.ArithmeticOverflow),
+  };
+}
+
+fn validStart(size: int, start: int): Result<void, Error> {
+  if start < 0 || start >= size {
+    return Err(Error.InvalidVertex);
+  }
+  return Ok();
+}
+
+fn validateAdjacency(graph: Adjacency): Result<void, Error> {
+  for neighbors in graph {
+    for neighbor in neighbors {
+      if neighbor < 0 || neighbor >= graph.length() {
+        return Err(Error.InvalidEndpoint);
+      }
+    }
+  }
+  return Ok();
+}
+
+fn validateWeighted(graph: WeightedAdjacency): Result<void, Error> {
+  for neighbors in graph {
+    for current in neighbors {
+      if current.to < 0 || current.to >= graph.length() {
+        return Err(Error.InvalidEndpoint);
+      }
+    }
+  }
+  return Ok();
+}
+
+fn undirected(graph: Adjacency): Result<void, Error> {
+  validateAdjacency(graph)?;
+  for node in 0..graph.length() {
+    for neighbor in graph[node] {
+      let forward = 0;
+      let backward = 0;
+      for target in graph[node] {
+        if target == neighbor {
+          forward += 1;
+        }
+      }
+      for target in graph[neighbor] {
+        if target == node {
+          backward += 1;
+        }
+      }
+      if forward != backward {
+        return Err(Error.NotUndirected);
+      }
+    }
+  }
+  return Ok();
+}
+
+fn undirectedWeighted(graph: WeightedAdjacency): Result<void, Error> {
+  validateWeighted(graph)?;
+  for node in 0..graph.length() {
+    for current in graph[node] {
+      let forward = 0;
+      let backward = 0;
+      for other in graph[node] {
+        if other.to == current.to && other.weight == current.weight {
+          forward += 1;
+        }
+      }
+      for other in graph[current.to] {
+        if other.to == node && other.weight == current.weight {
+          backward += 1;
+        }
+      }
+      if forward != backward {
+        return Err(Error.NotUndirected);
+      }
+    }
+  }
+  return Ok();
+}
+
+fn asAdjacency(graph: WeightedAdjacency): Adjacency {
+  const result: Adjacency = [];
+  for neighbors in graph {
+    const row: []int = [];
+    for current in neighbors {
+      appendInt(row, current.to);
+    }
+    match result.push(row) {
+      Ok(_) => {},
+      Err(_) => panic("bounded graph rows exceeded the source vertex count"),
+    };
+  }
+  return result;
+}

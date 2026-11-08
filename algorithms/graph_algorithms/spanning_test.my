@@ -1,0 +1,127 @@
+fn spanning(value: Result<SpanningTree, Error>): SpanningTree {
+  return match value {
+    Ok(tree) => tree,
+    Err(_) => panic("connected undirected graph rejected"),
+  };
+}
+
+@test
+fn minimumSpanningTreesMatchAllThreeVertexTreeChoices(): void {
+  const weights = [-2, 0, 3];
+  for first in weights {
+    for second in weights {
+      for third in weights {
+        const graph: WeightedAdjacency = [
+          [edge(1, first), edge(2, second)],
+          [edge(0, first), edge(2, third)],
+          [edge(0, second), edge(1, third)],
+        ];
+        let expected = first + second;
+        if first + third < expected {
+          expected = first + third;
+        }
+        if second + third < expected {
+          expected = second + third;
+        }
+        const grown = spanning(prim(graph));
+        const sorted = spanning(kruskal(graph));
+        require(
+          grown.totalWeight == expected && sorted.totalWeight == expected,
+          "MST disagrees with exhaustive spanning-tree enumeration",
+        );
+        require(
+          grown.edges.length() == 2 && sorted.edges.length() == 2,
+          "MST must contain V-1 edges",
+        );
+      }
+    }
+  }
+}
+
+@test
+fn parallelEdgesLoopsAndEmptySpanningTrees(): void {
+  const parallel: WeightedAdjacency = [[edge(1, 5), edge(1, -2)], [edge(0, 5), edge(0, -2)]];
+  require(
+    spanning(prim(parallel)).totalWeight == -2 && spanning(kruskal(parallel)).totalWeight == -2,
+    "negative parallel edge ignored",
+  );
+  const loop: WeightedAdjacency = [[edge(0, -100)]];
+  require(
+    spanning(prim(loop)).totalWeight == 0 && spanning(kruskal(loop)).edges.length() == 0,
+    "self-loop entered a spanning tree",
+  );
+  const empty: WeightedAdjacency = [];
+  require(
+    spanning(prim(empty)).edges.length() == 0 && spanning(kruskal(empty)).totalWeight == 0,
+    "empty spanning tree contract broken",
+  );
+}
+
+@test
+fn spanningTreesRejectMalformedDisconnectedAndOverflowingInputs(): void {
+  const disconnected: WeightedAdjacency = [[], []];
+  require(
+    match prim(disconnected) {
+      Err(Error.Disconnected) => true,
+      _ => false,
+    },
+    "Prim accepted a disconnected graph",
+  );
+  require(
+    match kruskal(disconnected) {
+      Err(Error.Disconnected) => true,
+      _ => false,
+    },
+    "Kruskal accepted a disconnected graph",
+  );
+  const asymmetric: WeightedAdjacency = [[edge(1, 2)], [edge(0, 3)]];
+  require(
+    match prim(asymmetric) {
+      Err(Error.NotUndirected) => true,
+      _ => false,
+    },
+    "Prim accepted asymmetric weights",
+  );
+  require(
+    match kruskal(asymmetric) {
+      Err(Error.NotUndirected) => true,
+      _ => false,
+    },
+    "Kruskal accepted asymmetric weights",
+  );
+  const invalid: WeightedAdjacency = [[], [edge(4, 1)]];
+  require(
+    match prim(invalid) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "Prim skipped an unreachable bad endpoint",
+  );
+  require(
+    match kruskal(invalid) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "Kruskal skipped an unreachable bad endpoint",
+  );
+  const maximum: int = 9_223_372_036_854_775_807;
+  const overflow: WeightedAdjacency = [
+    [edge(1, maximum), edge(2, 1)],
+    [edge(0, maximum)],
+    [edge(0, 1)],
+  ];
+  require(
+    match prim(overflow) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "Prim total overflow not reported",
+  );
+  require(
+    match kruskal(overflow) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "Kruskal total overflow not reported",
+  );
+}

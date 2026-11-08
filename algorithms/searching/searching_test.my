@@ -1,0 +1,125 @@
+fn assertSearchIndex(actual: Option<int>, expected: Option<int>): void {
+  const matches = match actual {
+    Some(index) => match expected {
+      Some(wanted) => index == wanted,
+      None => false,
+    },
+    None => match expected {
+      Some(_) => false,
+      None => true,
+    },
+  };
+  if !matches {
+    panic("search index disagreed with independent linear oracle");
+  }
+}
+
+fn searchTestAppend(values: []int, value: int): void {
+  const added = match values.push(value) {
+    Ok(_) => true,
+    Err(_) => false,
+  };
+  if !added {
+    panic("small search test input could not grow");
+  }
+}
+
+fn sortedSearchOracle(values: []int): []int {
+  const output = arrayOf<int>();
+  for key in [-1, 0, 1] {
+    for value in values {
+      if value == key {
+        searchTestAppend(output, value);
+      }
+    }
+  }
+  return output;
+}
+
+fn checkSearchCase(values: []int, target: int): void {
+  let first: Option<int> = None;
+  let last: Option<int> = None;
+  for index in 0..length(values) {
+    if values[index] == target {
+      const missing = match first {
+        Some(_) => false,
+        None => true,
+      };
+      if missing {
+        first = Some(index);
+      }
+      last = Some(index);
+    }
+  }
+  assertSearchIndex(linearSearch(values, target), first);
+  assertSearchIndex(lastIndexOf(values, target), last);
+}
+
+fn checkOrderedSearchCase(values: []int, target: int): void {
+  let first: Option<int> = None;
+  let lower = 0;
+  let upper = 0;
+  for index in 0..length(values) {
+    if values[index] < target {
+      lower += 1;
+    }
+    if values[index] <= target {
+      upper += 1;
+    }
+    if values[index] == target {
+      const missing = match first {
+        Some(_) => false,
+        None => true,
+      };
+      if missing {
+        first = Some(index);
+      }
+    }
+  }
+  assertSearchIndex(binarySearch(values, target), first);
+  assertSearchIndex(jumpSearch(values, target), first);
+  assertSearchIndex(exponentialSearch(values, target), first);
+  if lowerBound(values, target) != lower || upperBound(values, target) != upper {
+    panic("ordered search bounds disagreed with independent counting oracle");
+  }
+}
+
+@test
+fn exhaustiveSmallSearches(): void {
+  let combinations = 1;
+  for size in 0..6 {
+    for encoded in 0..combinations {
+      const values = arrayOf<int>();
+      let remaining = encoded;
+      for index in 0..size {
+        searchTestAppend(values, remaining % 3 - 1);
+        remaining /= 3;
+      }
+      const original = copy(values);
+      const ordered = sortedSearchOracle(values);
+      for target in [-2, -1, 0, 1, 2] {
+        checkSearchCase(values, target);
+        checkOrderedSearchCase(ordered, target);
+      }
+      for index in 0..size {
+        if values[index] != original[index] {
+          panic("a search modified its input");
+        }
+      }
+    }
+    combinations *= 3;
+  }
+}
+
+@test
+fn searchMachineIntegerBoundaries(): void {
+  const maximum = 9_223_372_036_854_775_807;
+  const minimum = -maximum - 1;
+  const values = arrayOf(minimum, -1, 0, 1, maximum);
+  for target in [minimum, -2, -1, 0, 1, 2, maximum] {
+    checkSearchCase(values, target);
+    checkOrderedSearchCase(values, target);
+  }
+  assertSearchIndex(lastIndexOf([4, 4, 4], 4), Some(2));
+  checkOrderedSearchCase([4, 4, 4], 4);
+}

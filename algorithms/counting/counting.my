@@ -1,0 +1,31 @@
+public fn intFrequencies(values: []int): Map<int, int> {
+  const counts: Map<int, int> = mapOf<int, int>();
+  for value in values {
+    const next = match counts.get(value) {
+      Some(count) => count + 1,
+      None => 1,
+    };
+    const _ = counts.put(value, next);
+  }
+  return counts;
+}
+
+public fn uniqueIntCount(values: []int): int {
+  const unique: Set<int> = setOf<int>();
+  for value in values {
+    const _ = unique.add(value);
+  }
+  return unique.length();
+}
+
+public fn runeFrequencies(values: []rune): Map<rune, int> {
+  const counts: Map<rune, int> = mapOf<rune, int>();
+  for value in values {
+    const next = match counts.get(value) {
+      Some(count) => count + 1,
+      None => 1,
+    };
+    const _ = counts.put(value, next);
+  }
+  return counts;
+}

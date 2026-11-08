@@ -1,0 +1,55 @@
+public type FenwickTree {
+  tree: []int,
+  values: []int,
+}
+
+public fn newFenwick(values: []int): Result<FenwickTree, Error> {
+  const cells = sizePlus(values.length(), 1)?;
+  const result = FenwickTree { tree: zeroes(cells), values: zeroes(values.length()) };
+  for index in 0..values.length() {
+    add(result, index, values[index])?;
+  }
+  return Ok(result);
+}
+
+public fn length(tree: FenwickTree): int {
+  return tree.tree.length() - 1;
+}
+
+// Updates are failure-atomic: overflow leaves every tree cell unchanged.
+public fn add(tree: FenwickTree, index: int, delta: int): Result<void, Error> {
+  const size = length(tree);
+  if index < 0 || index >= size {
+    return Err(Error.InvalidIndex);
+  }
+  const updatedPoint = total(tree.values[index], delta)?;
+  const positions: []int = [];
+  const replacements: []int = [];
+  let position = index + 1;
+  while position <= size {
+    const value = total(tree.tree[position], delta)?;
+    append(positions, position);
+    append(replacements, value);
+    const step = position & -position;
+    if step > size - position {
+      break;
+    }
+    position += step;
+  }
+  for offset in 0..positions.length() {
+    tree.tree[positions[offset]] = replacements[offset];
+  }
+  tree.values[index] = updatedPoint;
+  return Ok();
+}
+
+public fn prefixSum(tree: FenwickTree, end: int): Result<int, Error> {
+  validRange(length(tree), 0, end)?;
+  let position = end;
+  let result = 0;
+  while position > 0 {
+    result = total(result, tree.tree[position])?;
+    position -= position & -position;
+  }
+  return Ok(result);
+}

@@ -1,0 +1,228 @@
+// Integer algorithms use nonnegative domains; None means invalid input or overflow.
+public fn gcd(a: int, b: int): Option<int> {
+  if a < 0 || b < 0 {
+    return None;
+  }
+  let left = a;
+  let right = b;
+  while right != 0 {
+    const remainder = left % right;
+    left = right;
+    right = remainder;
+  }
+  return Some(left);
+}
+
+public fn lcm(a: int, b: int): Option<int> {
+  if a < 0 || b < 0 {
+    return None;
+  }
+  if a == 0 || b == 0 {
+    return Some(0);
+  }
+  const divisor = match gcd(a, b) {
+    Some(value) => value,
+    None => {
+      return None;
+    },
+  };
+  return checkedMultiply(a / divisor, b);
+}
+
+public fn power(base: int, exponent: int): Option<int> {
+  if exponent < 0 {
+    return None;
+  }
+  let factor = base;
+  let remaining = exponent;
+  let result = 1;
+  while remaining > 0 {
+    if remaining % 2 == 1 {
+      result = match checkedMultiply(result, factor) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+    }
+    remaining /= 2;
+    if remaining > 0 {
+      factor = match checkedMultiply(factor, factor) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+    }
+  }
+  return Some(result);
+}
+
+// Preconditions: 0 <= a,b < modulus. Subtraction avoids overflow in a+b.
+fn addModulo(a: int, b: int, modulus: int): int {
+  if a >= modulus - b {
+    return a - (modulus - b);
+  }
+  return a + b;
+}
+
+fn multiplyModulo(a: int, b: int, modulus: int): int {
+  let left = a;
+  let right = b;
+  let result = 0;
+  while right > 0 {
+    if right % 2 == 1 {
+      result = addModulo(result, left, modulus);
+    }
+    right /= 2;
+    if right > 0 {
+      left = addModulo(left, left, modulus);
+    }
+  }
+  return result;
+}
+
+public fn modularPower(base: int, exponent: int, modulus: int): Option<int> {
+  if base < 0 || exponent < 0 || modulus <= 0 {
+    return None;
+  }
+  let result = 1 % modulus;
+  let factor = base % modulus;
+  let remaining = exponent;
+  while remaining > 0 {
+    if remaining % 2 == 1 {
+      result = multiplyModulo(result, factor, modulus);
+    }
+    remaining /= 2;
+    if remaining > 0 {
+      factor = multiplyModulo(factor, factor, modulus);
+    }
+  }
+  return Some(result);
+}
+
+public fn isPrime(value: int): bool {
+  if value < 2 {
+    return false;
+  }
+  if value % 2 == 0 {
+    return value == 2;
+  }
+  let divisor = 3;
+  while divisor <= value / divisor {
+    if value % divisor == 0 {
+      return false;
+    }
+    divisor += 2;
+  }
+  return true;
+}
+
+// Returns primes strictly below limit. Storage is O(limit).
+public fn sieve(limit: int): Option<[]int> {
+  if limit < 0 {
+    return None;
+  }
+  const composite: []bool = [];
+  for index in 0..limit {
+    const _ = composite.push(false);
+  }
+  let candidate = 2;
+  while candidate < limit && candidate <= (limit - 1) / candidate {
+    if !composite[candidate] {
+      let multiple = candidate * candidate;
+      while multiple < limit {
+        composite[multiple] = true;
+        if candidate >= limit - multiple {
+          break;
+        }
+        multiple += candidate;
+      }
+    }
+    candidate += 1;
+  }
+  const result: []int = [];
+  for index in 2..limit {
+    if !composite[index] {
+      const _ = result.push(index);
+    }
+  }
+  return Some(result);
+}
+
+public fn primeFactors(value: int): Option<[]int> {
+  if value < 1 {
+    return None;
+  }
+  const result: []int = [];
+  let remaining = value;
+  let divisor = 2;
+  while divisor <= remaining / divisor {
+    while remaining % divisor == 0 {
+      const _ = result.push(divisor);
+      remaining /= divisor;
+    }
+    divisor += 1;
+  }
+  if remaining > 1 {
+    const _ = result.push(remaining);
+  }
+  return Some(result);
+}
+
+public fn binomial(n: int, k: int): Option<int> {
+  if n < 0 || k < 0 || k > n {
+    return None;
+  }
+  let width = k;
+  if n - k < width {
+    width = n - k;
+  }
+  if width == 0 {
+    return Some(1);
+  }
+  const row: []int = [1];
+  for index in 0..width {
+    const _ = row.push(0);
+  }
+  let step = 0;
+  while step < n {
+    step += 1;
+    let column = width;
+    if step < column {
+      column = step;
+    }
+    while column > 0 {
+      row[column] = match checkedAdd(row[column], row[column - 1]) {
+        Some(value) => value,
+        None => {
+          return None;
+        },
+      };
+      column -= 1;
+    }
+  }
+  return Some(row[width]);
+}
+
+public fn integerSquareRoot(value: int): Option<int> {
+  if value < 0 {
+    return None;
+  }
+  let low = 0;
+  let high = value;
+  let answer = 0;
+  while low <= high {
+    const middle = low + (high - low) / 2;
+    if middle == 0 || middle <= value / middle {
+      answer = middle;
+      if middle == value {
+        break;
+      }
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return Some(answer);
+}

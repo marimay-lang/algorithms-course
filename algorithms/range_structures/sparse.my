@@ -1,0 +1,65 @@
+public type SparseTable {
+  rows: [][]int,
+  spans: []int,
+  logs: []int,
+  size: int,
+}
+
+public fn newSparseTable(values: []int): Result<SparseTable, Error> {
+  const logs = zeroes(sizePlus(values.length(), 1)?);
+  for length in 2..logs.length() {
+    logs[length] = logs[length / 2] + 1;
+  }
+  const rows: [][]int = [];
+  const spans: []int = [];
+  match rows.push(values.copy()) {
+    Ok(_) => {},
+    Err(_) => panic("sparse table level count exceeded its source size"),
+  };
+  append(spans, 1);
+  let span = 2;
+  while span <= values.length() {
+    const previous = rows[rows.length() - 1];
+    const current: []int = [];
+    const half = span / 2;
+    for start in 0..values.length() - span + 1 {
+      const left = previous[start];
+      const right = previous[start + half];
+      let value = left;
+      if right < left {
+        value = right;
+      }
+      append(current, value);
+    }
+    match rows.push(current) {
+      Ok(_) => {},
+      Err(_) => panic("sparse table level count exceeded its source size"),
+    };
+    append(spans, span);
+    if span > values.length() / 2 {
+      break;
+    }
+    span *= 2;
+  }
+  return Ok(SparseTable { rows, spans, logs, size: values.length() });
+}
+
+public fn length(table: SparseTable): int {
+  return table.size;
+}
+
+public fn minimum(table: SparseTable, start: int, end: int): Result<int, Error> {
+  validRange(table.size, start, end)?;
+  if start == end {
+    return Err(Error.EmptyRange);
+  }
+  const level = table.logs[end - start];
+  const row = table.rows[level];
+  const span = table.spans[level];
+  const left = row[start];
+  const right = row[end - span];
+  if left < right {
+    return Ok(left);
+  }
+  return Ok(right);
+}

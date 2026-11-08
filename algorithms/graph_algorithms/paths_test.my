@@ -1,0 +1,199 @@
+@test
+fn independentShortestPathAlgorithmsAgreeOnSignedDag(): void {
+  const graph: WeightedAdjacency = [
+    [edge(1, 4), edge(2, 8), edge(1, 7)],
+    [edge(2, -2), edge(3, 5)],
+    [edge(3, 1)],
+    [],
+    [],
+  ];
+  const dag = pathDistances(dagShortestPaths(graph, 0));
+  const bellman = pathDistances(bellmanFord(graph, 0));
+  const matrix = match floydWarshall(graph) {
+    Ok(value) => value,
+    Err(_) => panic("valid signed DAG rejected"),
+  };
+  require(
+    sameDistance(dag[0], Some(0)) && sameDistance(dag[1], Some(4)),
+    "initial shortest distances incorrect",
+  );
+  require(
+    sameDistance(dag[2], Some(2)) && sameDistance(dag[3], Some(3)),
+    "negative DAG edge was not relaxed",
+  );
+  require(!hasDistance(dag[4]), "isolated vertex must stay unreachable");
+  for node in 0..graph.length() {
+    require(
+      sameDistance(dag[node], bellman[node]) && sameDistance(dag[node], matrix[0][node]),
+      "independent shortest path methods disagree",
+    );
+  }
+  require(
+    match dijkstra(graph, 0) {
+      Err(Error.NegativeWeight) => true,
+      _ => false,
+    },
+    "Dijkstra accepted a negative weight",
+  );
+}
+
+@test
+fn dijkstraMatchesBellmanFordOnGeneratedNonnegativeGraphs(): void {
+  for seed in 0..32 {
+    const graph: WeightedAdjacency = [];
+    for source in 0..5 {
+      const row: []Edge = [];
+      for target in 0..5 {
+        if (source * 7 + target * 3 + seed) % 4 != 0 {
+          match row.push(edge(target, (source * 11 + target * 5 + seed) % 9)) {
+            Ok(_) => {},
+            Err(_) => panic("small generated fixture overflow"),
+          };
+        }
+      }
+      match graph.push(row) {
+        Ok(_) => {},
+        Err(_) => panic("small generated fixture overflow"),
+      };
+    }
+    for start in 0..5 {
+      const dense = pathDistances(dijkstra(graph, start));
+      const relaxed = pathDistances(bellmanFord(graph, start));
+      for target in 0..5 {
+        require(
+          sameDistance(dense[target], relaxed[target]),
+          "Dijkstra disagrees with repeated edge relaxation",
+        );
+      }
+    }
+  }
+}
+
+@test
+fn negativeCyclesHaveExplicitReachabilityContracts(): void {
+  const reachable: WeightedAdjacency = [[edge(1, 1)], [edge(2, -2)], [edge(1, -2)]];
+  require(
+    match bellmanFord(reachable, 0) {
+      Err(Error.NegativeCycle) => true,
+      _ => false,
+    },
+    "reachable negative cycle missed",
+  );
+  require(
+    match floydWarshall(reachable) {
+      Err(Error.NegativeCycle) => true,
+      _ => false,
+    },
+    "all-pairs negative cycle missed",
+  );
+  require(
+    match dagShortestPaths(reachable, 0) {
+      Err(Error.Cycle) => true,
+      _ => false,
+    },
+    "cyclic graph accepted as a DAG",
+  );
+  const disconnected: WeightedAdjacency = [[edge(1, 2)], [], [edge(2, -1)]];
+  const result = pathDistances(bellmanFord(disconnected, 0));
+  require(
+    sameDistance(result[1], Some(2)) && !hasDistance(result[2]),
+    "unreachable negative cycle contaminated single-source paths",
+  );
+  require(
+    match floydWarshall(disconnected) {
+      Err(Error.NegativeCycle) => true,
+      _ => false,
+    },
+    "all-pairs scan skipped an unreachable negative cycle",
+  );
+  require(
+    match dijkstra(disconnected, 0) {
+      Err(Error.NegativeWeight) => true,
+      _ => false,
+    },
+    "Dijkstra skipped an unreachable negative weight",
+  );
+}
+
+@test
+fn fullWeightedValidationAndOverflowNeverBecomeDistances(): void {
+  const invalid: WeightedAdjacency = [[edge(1, 2)], [], [edge(3, 0)]];
+  require(
+    match dagShortestPaths(invalid, 0) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "DAG skipped a bad endpoint",
+  );
+  require(
+    match bellmanFord(invalid, 0) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "Bellman-Ford skipped a bad endpoint",
+  );
+  require(
+    match dijkstra(invalid, 0) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "Dijkstra skipped a bad endpoint",
+  );
+  require(
+    match floydWarshall(invalid) {
+      Err(Error.InvalidEndpoint) => true,
+      _ => false,
+    },
+    "Floyd-Warshall skipped a bad endpoint",
+  );
+  const maximum: int = 9_223_372_036_854_775_807;
+  const exact: WeightedAdjacency = [[edge(1, maximum)], []];
+  require(
+    sameDistance(pathDistances(dijkstra(exact, 0))[1], Some(maximum)),
+    "large valid distance collided with a sentinel",
+  );
+  const overflow: WeightedAdjacency = [[edge(1, maximum)], [edge(2, 1)], []];
+  require(
+    match dagShortestPaths(overflow, 0) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "DAG overflow not reported",
+  );
+  require(
+    match bellmanFord(overflow, 0) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "Bellman-Ford overflow not reported",
+  );
+  require(
+    match dijkstra(overflow, 0) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "Dijkstra overflow not reported",
+  );
+  require(
+    match floydWarshall(overflow) {
+      Err(Error.ArithmeticOverflow) => true,
+      _ => false,
+    },
+    "Floyd-Warshall overflow not reported",
+  );
+  require(
+    match bellmanFord([], 0) {
+      Err(Error.InvalidVertex) => true,
+      _ => false,
+    },
+    "empty shortest-path source accepted",
+  );
+  const empty: WeightedAdjacency = [];
+  require(
+    match floydWarshall(empty) {
+      Ok(value) => value.length() == 0,
+      _ => false,
+    },
+    "empty all-pairs matrix rejected",
+  );
+}

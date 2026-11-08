@@ -1,19 +1,24 @@
 # Progress
 
-Levels record demonstrated skills within this course rather than prior experience.
+This is a record of study, not a claim that publishing examples demonstrates
+personal mastery. Completing a row requires explaining its invariant, solving
+the follow-up independently and passing the tests.
 
-| Area | Current level | Next evidence |
-|---|---|---|
-| Marimay and the type model | Can explain with a prompt | Implement a return of `Option<int>` |
-| Complexity | Can explain with a prompt | Justify O(n) time and O(1) memory |
-| Correctness and invariants | Not studied yet | State the linear-search invariant |
-| Data structures | Not studied yet | Explain the array-operation model |
-| Algorithms | Not studied yet | Implement linear search |
-| Testing | Not studied yet | Cover search boundary cases |
-| Tooling | Can explain with a prompt | Independently run fmt/check/test |
-| Compiler structure | Can explain with a prompt | Associate a diagnostic with a frontend stage |
+| Material available | Practice evidence to collect |
+|---|---|
+| Linear scan and search | Explain first-occurrence correctness and empty input |
+| Ordered search | Trace half-open bounds with duplicates |
+| Comparison/distribution sorting | Explain stability, partition/merge invariants and key domains |
+| Stack, queue, heap and DSU | Trace a mixed sequence of operations and justify costs |
+| Prefix sums and sliding windows | Derive a range answer and the monotone-deque invariant |
+| Hashing and counting | Explain collision-independent API use and multiplicities |
+| Number theory | Identify overflow and input-domain boundaries |
+| Graph algorithms | Distinguish reachability, negative cycles and disconnected graphs |
+| Range data structures | Derive the intervals owned by each node |
+| Dynamic programming | State the recurrence, base cases and update order |
+| Unicode text | Explain scalar positions and overlapping matches |
+| Greedy algorithms | Supply an exchange argument or a counterexample |
+| Testing and tooling | Run the full VM/native verifier and explain an oracle test |
 
-## Covered
-
-- Introductory map of the language, VM/native and preview limitations.
-- Started lesson 1: cost model and a linear scan.
+The catalogue and tests provide runnable reference material for every row.
+Personal completion remains to be recorded after independent practice.

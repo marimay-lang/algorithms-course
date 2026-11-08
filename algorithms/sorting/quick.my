@@ -1,0 +1,52 @@
+type QuickSortRange {
+  start: int,
+  end: int,
+}
+
+// Three-way partitioning handles repeated keys. Process the smaller side
+// immediately and defer the larger side to keep the explicit stack bounded.
+public fn quickSort(values: []int): Result<void, ArrayGrowthError> {
+  if length(values) < 2 {
+    return Ok();
+  }
+  const pending = arrayOf<QuickSortRange>();
+  pending.push(QuickSortRange { start: 0, end: length(values) })?;
+  while length(pending) > 0 {
+    const current = match pending.pop() {
+      Some(value) => value,
+      None => panic("non-empty quicksort stack lost a range"),
+    };
+    let start = current.start;
+    let end = current.end;
+    while end - start > 1 {
+      const pivot = values[start + (end - start) / 2];
+      let lower = start;
+      let scan = start;
+      let upper = end;
+      while scan < upper {
+        if values[scan] < pivot {
+          swapSortValues(values, lower, scan);
+          lower += 1;
+          scan += 1;
+        } else if values[scan] > pivot {
+          upper -= 1;
+          swapSortValues(values, scan, upper);
+        } else {
+          scan += 1;
+        }
+      }
+      if lower - start < end - upper {
+        if end - upper > 1 {
+          pending.push(QuickSortRange { start: upper, end })?;
+        }
+        end = lower;
+      } else {
+        if lower - start > 1 {
+          pending.push(QuickSortRange { start, end: lower })?;
+        }
+        start = upper;
+      }
+    }
+  }
+  return Ok();
+}

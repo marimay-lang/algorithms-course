@@ -1,0 +1,24 @@
+import { Error as IoError, println } from "std/io";
+import { runes } from "std/text";
+
+import * as algorithms from "course.local/algorithms/algorithms/text_algorithms";
+
+fn scalarInput(text: string): []rune {
+  return match runes(text, 64) {
+    Ok(values) => values,
+    Err(_) => panic("text example input exceeded its documented rune limit"),
+  };
+}
+
+fn main(): Result<void, IoError> {
+  const text = scalarInput("λ🚀λ東");
+  if algorithms.findKmp(text, scalarInput("λ東")) != Some(2) {
+    panic("text search did not return a Unicode scalar offset");
+  }
+  const palindrome = algorithms.longestPalindrome(scalarInput("λ🚀λ"));
+  if palindrome.start != 0 || palindrome.length != 3 {
+    panic("text palindrome did not count Unicode scalars");
+  }
+  println("text example passed")?;
+  return Ok();
+}

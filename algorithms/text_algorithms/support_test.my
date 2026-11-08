@@ -1,0 +1,45 @@
+import { runes } from "std/text";
+
+fn scalarInput(text: string): []rune {
+  return match runes(text, 1024) {
+    Ok(values) => values,
+    Err(_) => panic("invalid test rune input"),
+  };
+}
+
+fn sampleText(size: int, code: int, alphabet: []rune): []rune {
+  const values = arrayOf<rune>();
+  let remaining = code;
+  for index in 0..size {
+    expect.ok(values.push(alphabet[remaining % alphabet.length()]));
+    remaining /= alphabet.length();
+  }
+  return values;
+}
+
+fn smallPower(base: int, exponent: int): int {
+  let value = 1;
+  for index in 0..exponent {
+    value *= base;
+  }
+  return value;
+}
+
+fn checkedSpan(value: Option<RuneSpan>): RuneSpan {
+  return match value {
+    Some(span) => span,
+    None => panic("unexpected span failure"),
+  };
+}
+
+fn checkSpan(actual: RuneSpan, start: int, size: int): void {
+  expect.equal(actual.start, start);
+  expect.equal(actual.length, size);
+}
+
+fn checkedZ(value: Option<[]int>): []int {
+  return match value {
+    Some(values) => values,
+    None => panic("unexpected Z growth failure"),
+  };
+}

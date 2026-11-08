@@ -1,0 +1,36 @@
+public type RuneRun {
+  public value: rune,
+  public count: int,
+}
+
+/// Consecutive-run encoding of Unicode scalar arrays, without converting runes
+/// into strings. Counts are scalar counts; O(n) time and O(number of runs) memory.
+public fn runLengthEncode(text: []rune): Option<[]RuneRun> {
+  const runs = arrayOf<RuneRun>();
+  if text.length() == 0 {
+    return Some(runs);
+  }
+  let value = text[0];
+  let count = 1;
+  for index in 1..text.length() {
+    if text[index] == value {
+      count += 1;
+    } else {
+      match runs.push(RuneRun { value, count }) {
+        Ok(_) => {},
+        Err(_) => {
+          return None;
+        },
+      };
+      value = text[index];
+      count = 1;
+    }
+  }
+  match runs.push(RuneRun { value, count }) {
+    Ok(_) => {},
+    Err(_) => {
+      return None;
+    },
+  };
+  return Some(runs);
+}
