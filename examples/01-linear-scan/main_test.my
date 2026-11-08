@@ -1,0 +1,16 @@
+@test
+fn countAboveHandlesRepresentativeInputs(): void {
+  if countAbove([4, -1, 7, 7, 2], 3) != 3
+    || countAbove([-4, -1, 0], 3) != 0
+    || countAbove([4, 4, 4], 3) != 3 {
+    panic("representative linear scan case failed");
+  }
+}
+
+@test
+fn countAboveHandlesBoundaries(): void {
+  let empty: []int = [];
+  if countAbove(empty, 3) != 0 || countAbove([3], 3) != 0 || countAbove([4], 3) != 1 {
+    panic("linear scan boundary case failed");
+  }
+}

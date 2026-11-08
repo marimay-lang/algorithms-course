@@ -1,0 +1,22 @@
+import { formatI64 } from "std/convert";
+import { Error as IoError, println } from "std/io";
+
+fn countAbove(values: []int, threshold: int): int {
+  let count = 0;
+  for value in values {
+    if value > threshold {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+fn main(): Result<void, IoError> {
+  const actual = countAbove([4, -1, 7, 7, 2], 3);
+  println(formatI64(actual))?;
+  if actual != 3 {
+    panic("linear scan example produced an unexpected result");
+  }
+  println("linear scan example passed")?;
+  return Ok();
+}

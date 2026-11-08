@@ -1,0 +1,25 @@
+import { formatI64 } from "std/convert";
+import { Error as IoError, println } from "std/io";
+
+fn firstIndexOf(values: []int, target: int): Option<int> {
+  for index in 0..values.length() {
+    if values[index] == target {
+      return Some(index);
+    }
+  }
+
+  return None<int>();
+}
+
+fn main(): Result<void, IoError> {
+  const result = firstIndexOf([8, 3, 8], 5);
+
+  const i = match result {
+    Some(index) => index,
+    None => -1,
+  };
+
+  println(formatI64(i))?;
+
+  return Ok();
+}
